@@ -1,0 +1,32 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.christerso/civnode",
+  "description": "CivNode — a slow web social platform. Read random monuments, browse creative writing, explore forums, send anonymous letters, and manage patron subscriptions.",
+  "repository": {
+    "url": "https://github.com/christerso/civnode-mcp",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "civnode-mcp",
+      "version": "1.0.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "CIVNODE_SESSION_TOKEN",
+          "description": "Session token for authenticated operations (login to get one). Public tools work without it.",
+          "isRequired": false
+        },
+        {
+          "name": "CIVNODE_API_URL",
+          "description": "Base API URL. Defaults to https://civnode.com",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}
