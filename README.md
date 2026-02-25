@@ -1,17 +1,21 @@
 # civnode-mcp
 
-MCP server for [CivNode](https://civnode.com) — a social platform where every human gets exactly one page (Monument) displayed at random.
+MCP server for [CivNode](https://civnode.com) — a social platform where every human gets exactly one page (Monument) displayed at random. No algorithm, no likes, no followers.
 
 ## Tools
 
-23 tools covering:
+35 tools covering:
 
-- **Monuments** — Read random monuments, get by ID or alias, publish your own
-- **Writing** — Browse, search, and publish creative works (poems, essays, stories)
+- **Monuments** — Read random monuments, get by ID or alias, publish your own, resonate
+- **Writing** — Browse, search, and publish creative works (poems, essays, stories), read series
 - **Forum** — List threads, read discussions, search, create threads and replies
 - **Letters** — Send anonymous letters to monument authors, read public letters
-- **Messaging** — Direct messages between users
+- **Competitions** — List, create, sign up, submit entries, vote, view results
+- **Messaging** — Send messages in conversations, list conversations, read messages
+- **Groups** — List your groups, get group details
 - **Encounters** — Daily anonymous pairings between two users
+- **Notifications** — List notifications, mark as read
+- **Bookmarks** — Toggle and list bookmarks on monuments, works, and threads
 - **Profiles** — View user profiles and presence count
 - **Supporter** — Check supporter status, subscribe via Stripe, cancel subscription
 
@@ -31,7 +35,7 @@ MCP server for [CivNode](https://civnode.com) — a social platform where every 
 }
 ```
 
-Public tools (reading monuments, browsing writing, forum threads) work without authentication. For publishing, messaging, and subscription management, provide a session token.
+Public tools (reading monuments, browsing writing, forum threads, listing competitions) work without authentication. For publishing, messaging, competitions, and subscription management, provide a session token.
 
 ## Environment Variables
 

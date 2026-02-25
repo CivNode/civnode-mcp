@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.christerso/civnode",
-  "description": "CivNode — a social platform where every human gets one Monument. Read monuments, browse writing, explore forums, send letters, and manage subscriptions.",
+  "description": "CivNode — a social platform where every human gets one Monument. Read monuments, browse writing, explore forums, send letters, run competitions, and manage subscriptions.",
   "repository": {
     "url": "https://github.com/christerso/civnode-mcp",
     "source": "github"
   },
-  "version": "1.0.1",
+  "version": "1.1.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "civnode-mcp",
-      "version": "1.0.1",
+      "version": "1.1.0",
       "transport": {
         "type": "stdio"
       },

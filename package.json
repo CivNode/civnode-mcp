@@ -1,7 +1,7 @@
 {
   "name": "civnode-mcp",
-  "version": "1.0.1",
-  "description": "MCP server for CivNode — a social platform where every human gets one Monument displayed at random. Read monuments, browse writing, explore forums, send letters, and manage subscriptions.",
+  "version": "1.1.0",
+  "description": "MCP server for CivNode — a social platform where every human gets one Monument displayed at random. Read monuments, browse writing, explore forums, send letters, run competitions, and manage subscriptions.",
   "type": "module",
   "bin": {
     "civnode-mcp": "index.js"
@@ -22,6 +22,10 @@
     "forum",
     "letters",
     "encounters",
+    "competitions",
+    "groups",
+    "notifications",
+    "bookmarks",
     "supporter",
     "stripe"
   ],

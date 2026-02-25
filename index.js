@@ -6,8 +6,9 @@
  * CivNode — a social platform where every human gets exactly one page
  * (Monument) displayed at random. No algorithm, no likes, no followers.
  *
- * 22 tools covering monuments, creative writing, forums, anonymous
- * letters, direct messaging, encounters, groups, and supporter subscriptions.
+ * 35 tools covering monuments, creative writing, forums, anonymous
+ * letters, direct messaging, encounters, groups, competitions,
+ * notifications, bookmarks, and supporter subscriptions.
  *
  * Usage:
  *   npx civnode-mcp
@@ -81,6 +82,7 @@ async function deleteAPI(path) {
 }
 
 async function handleResponse(res) {
+  if (res.status === 204) return { ok: true };
   if (res.status === 401) {
     throw new Error(
       "Authentication required. Set CIVNODE_SESSION_TOKEN environment variable."
@@ -102,7 +104,7 @@ async function handleResponse(res) {
 // ─── Server ───
 
 const server = new Server(
-  { name: "civnode", version: "1.0.0" },
+  { name: "civnode", version: "1.1.0" },
   { capabilities: { tools: {} } }
 );
 
@@ -162,7 +164,7 @@ const tools = [
   {
     name: "publish_monument",
     description:
-      "Publish or update your Monument. Each user has exactly one. Subject to a 24-hour edit lock after publishing. Requires authentication.",
+      "Publish or update your Monument. Each user has exactly one. Requires authentication.",
     inputSchema: {
       type: "object",
       properties: {
@@ -172,12 +174,20 @@ const tools = [
         },
         body_markdown: {
           type: "string",
-          description: "Monument content in Markdown (max 50000 chars)",
+          description: "Monument content in Markdown (max 5000 words)",
         },
         sources: {
           type: "array",
           items: { type: "string" },
-          description: "Optional source URLs",
+          description: "Source URLs (max 5, must be http/https)",
+        },
+        identity_mode: {
+          type: "string",
+          description: "Identity: alias, real_name, or incognito (default: alias)",
+        },
+        author_note: {
+          type: "string",
+          description: "Optional note about what changed (max 500 chars, stored in version history)",
         },
       },
       required: ["title", "body_markdown"],
@@ -187,7 +197,8 @@ const tools = [
         title: args.title,
         body_markdown: args.body_markdown,
         sources: args.sources || [],
-        identity_mode: "alias",
+        identity_mode: args.identity_mode || "alias",
+        author_note: args.author_note || "",
       }),
   },
   {
@@ -221,7 +232,7 @@ const tools = [
   {
     name: "send_letter",
     description:
-      "Send an anonymous letter to a Monument author. Letters are CivNode's way of responding to someone's work — anonymous until the author chooses to reveal. Requires authentication.",
+      "Send an anonymous letter to a Monument author. Letters are CivNode's way of responding to someone's work — anonymous until the author chooses to reveal. Max 500 words. Requires authentication.",
     inputSchema: {
       type: "object",
       properties: {
@@ -231,7 +242,7 @@ const tools = [
         },
         body: {
           type: "string",
-          description: "Letter content (max 5000 chars)",
+          description: "Letter content (max 500 words)",
         },
       },
       required: ["monument_id", "body"],
@@ -260,18 +271,19 @@ const tools = [
   {
     name: "browse_writing",
     description:
-      "Browse published creative works on CivNode. Filter by literary form or mood.",
+      "Browse published creative works on CivNode. Returns works in random order. Filter by literary form or mood.",
     inputSchema: {
       type: "object",
       properties: {
         form: {
           type: "string",
           description:
-            "Filter by form: poem, short_story, essay, novella, serial_chapter, note, other",
+            "Filter by form: poem, short_story, essay, novella, serial_chapter, note, blog_post, other",
         },
         mood: {
           type: "string",
-          description: "Filter by mood tag",
+          description:
+            "Filter by mood: soothing, inspiring, provocative, melancholic, playful, urgent, contemplative, raw",
         },
         limit: {
           type: "integer",
@@ -302,7 +314,7 @@ const tools = [
   },
   {
     name: "search_writing",
-    description: "Search published creative works by keyword.",
+    description: "Search published creative works by keyword (full-text search).",
     inputSchema: {
       type: "object",
       properties: {
@@ -320,19 +332,19 @@ const tools = [
   {
     name: "publish_work",
     description:
-      "Publish a creative writing piece. Requires authentication.",
+      "Publish a creative writing piece. Requires blog to be enabled in settings. Requires authentication.",
     inputSchema: {
       type: "object",
       properties: {
-        title: { type: "string", description: "Work title" },
+        title: { type: "string", description: "Work title (max 200 chars)" },
         body_markdown: {
           type: "string",
-          description: "Work content in Markdown",
+          description: "Work content in Markdown (max 50000 words)",
         },
         form: {
           type: "string",
           description:
-            "Literary form: poem, short_story, essay, novella, serial_chapter, note, other",
+            "Literary form: poem, short_story, essay, novella, serial_chapter, note, blog_post, other",
         },
         mood_tags: {
           type: "array",
@@ -342,7 +354,11 @@ const tools = [
         reach: {
           type: "string",
           description:
-            "Visibility: private, friends, limited, open (default: open)",
+            "Visibility: private, limited, open (default: open)",
+        },
+        identity_mode: {
+          type: "string",
+          description: "Identity: alias, real_name, or incognito (default: alias)",
         },
       },
       required: ["title", "body_markdown", "form"],
@@ -353,9 +369,21 @@ const tools = [
         body_markdown: args.body_markdown,
         form: args.form,
         mood_tags: args.mood_tags || [],
-        identity_mode: "alias",
+        identity_mode: args.identity_mode || "alias",
         reach: args.reach || "open",
       }),
+  },
+  {
+    name: "get_series",
+    description: "Get a writing series with all its works in reading order.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Series UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/writing/series/${args.id}`),
   },
 
   // ── Forum ──
@@ -391,7 +419,7 @@ const tools = [
   },
   {
     name: "forum_search",
-    description: "Search threads in a user's forum.",
+    description: "Search threads in a user's forum by keyword.",
     inputSchema: {
       type: "object",
       properties: {
@@ -451,7 +479,7 @@ const tools = [
   {
     name: "get_profile",
     description:
-      "Get a user's public profile including alias, first words, supporter status, and join date.",
+      "Get a user's public profile including alias, first words, supporter status, join date, and content counts.",
     inputSchema: {
       type: "object",
       properties: {
@@ -467,43 +495,31 @@ const tools = [
   {
     name: "send_message",
     description:
-      "Send a direct message to another user. Creates a conversation if one doesn't exist. Requires authentication.",
+      "Send a message in an existing conversation. Requires authentication.",
     inputSchema: {
       type: "object",
       properties: {
         conversation_id: {
           type: "string",
-          description:
-            "Conversation UUID (if known). If not provided, use recipient_alias to start a new conversation.",
+          description: "Conversation UUID",
         },
-        recipient_alias: {
+        content: {
           type: "string",
-          description:
-            "Alias of the recipient (for starting a new conversation)",
+          description: "Message content (max 10000 chars)",
         },
-        content: { type: "string", description: "Message content" },
       },
-      required: ["content"],
+      required: ["conversation_id", "content"],
     },
-    handler: (args) => {
-      if (args.conversation_id) {
-        return postAPI(
-          `/api/messages/conversations/${args.conversation_id}/messages`,
-          { content: args.content }
-        );
-      }
-      // Create a new conversation with the recipient.
-      return postAPI("/api/messages/conversations", {
-        type: "direct",
-        alias: args.recipient_alias,
-        message: args.content,
-      });
-    },
+    handler: (args) =>
+      postAPI(
+        `/api/messages/conversations/${args.conversation_id}/messages`,
+        { content: args.content }
+      ),
   },
   {
     name: "list_conversations",
     description:
-      "List your conversations with latest messages. Requires authentication.",
+      "List your conversations with latest message preview. Requires authentication.",
     inputSchema: {
       type: "object",
       properties: {
@@ -517,6 +533,309 @@ const tools = [
       const limit = args.limit || 20;
       return fetchAPI(`/api/messages/conversations?limit=${limit}`);
     },
+  },
+  {
+    name: "read_conversation",
+    description:
+      "Read messages in a conversation. Returns newest first. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        conversation_id: {
+          type: "string",
+          description: "Conversation UUID",
+        },
+        limit: {
+          type: "integer",
+          description: "Max messages (default 50)",
+        },
+      },
+      required: ["conversation_id"],
+    },
+    handler: (args) => {
+      const limit = args.limit || 50;
+      return fetchAPI(
+        `/api/messages/conversations/${args.conversation_id}/messages?limit=${limit}`
+      );
+    },
+  },
+
+  // ── Competitions ──
+  {
+    name: "list_competitions",
+    description:
+      "List writing competitions. Optionally filter by phase: signup, writing, voting, completed, cancelled.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        phase: {
+          type: "string",
+          description: "Filter by phase: signup, writing, voting, completed, cancelled",
+        },
+        limit: {
+          type: "integer",
+          description: "Max results (default 50)",
+        },
+      },
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.phase) params.set("phase", args.phase);
+      if (args.limit) params.set("limit", String(args.limit));
+      const qs = params.toString();
+      return fetchAPI(`/api/competitions${qs ? "?" + qs : ""}`);
+    },
+  },
+  {
+    name: "get_competition",
+    description:
+      "Get details for a specific competition including signup/entry/vote counts. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Competition UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/competitions/${args.id}`),
+  },
+  {
+    name: "create_competition",
+    description:
+      "Create a new writing competition. Requires supporter status. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: {
+          type: "string",
+          description: "Competition title (max 200 chars)",
+        },
+        prompt: {
+          type: "string",
+          description: "Writing prompt for participants",
+        },
+        form_constraint: {
+          type: "string",
+          description: "Required form: poem, short_story, essay, or any (default: any)",
+        },
+        word_limit: {
+          type: "integer",
+          description: "Max words per entry (500-20000, default: 5000)",
+        },
+        min_participants: {
+          type: "integer",
+          description: "Minimum signups to proceed (min 5, default: 5)",
+        },
+        runners_up_count: {
+          type: "integer",
+          description: "Number of runners-up to highlight (default: 2)",
+        },
+        signup_duration_days: {
+          type: "integer",
+          description: "Days for signup phase (default: 7)",
+        },
+        writing_duration_days: {
+          type: "integer",
+          description: "Days for writing phase (default: 14)",
+        },
+        voting_duration_days: {
+          type: "integer",
+          description: "Days for voting phase (default: 7)",
+        },
+      },
+      required: ["title", "prompt"],
+    },
+    handler: (args) =>
+      postAPI("/api/competitions", {
+        title: args.title,
+        prompt: args.prompt,
+        form_constraint: args.form_constraint || "any",
+        word_limit: args.word_limit || 5000,
+        min_participants: args.min_participants || 5,
+        runners_up_count: args.runners_up_count || 2,
+        signup_duration_days: args.signup_duration_days || 7,
+        writing_duration_days: args.writing_duration_days || 14,
+        voting_duration_days: args.voting_duration_days || 7,
+      }),
+  },
+  {
+    name: "competition_signup",
+    description:
+      "Sign up for a competition (signup phase only). The creator cannot enter their own competition. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Competition UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) =>
+      postAPI(`/api/competitions/${args.id}/signup`),
+  },
+  {
+    name: "competition_submit_entry",
+    description:
+      "Submit or update your entry for a competition (writing phase only). Must be signed up. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Competition UUID" },
+        body_markdown: {
+          type: "string",
+          description: "Entry content in Markdown (must be within the competition word limit)",
+        },
+      },
+      required: ["id", "body_markdown"],
+    },
+    handler: (args) =>
+      postAPI(`/api/competitions/${args.id}/entry`, {
+        body: args.body_markdown,
+      }),
+  },
+  {
+    name: "competition_vote",
+    description:
+      "Cast your vote in a competition (voting phase only). Pick your top 3 entries. First pick gets 3 points, second gets 2, third gets 1. Cannot vote for your own entry. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Competition UUID" },
+        first_pick: {
+          type: "string",
+          description: "Entry UUID for 1st place (3 points)",
+        },
+        second_pick: {
+          type: "string",
+          description: "Entry UUID for 2nd place (2 points)",
+        },
+        third_pick: {
+          type: "string",
+          description: "Entry UUID for 3rd place (1 point)",
+        },
+      },
+      required: ["id", "first_pick", "second_pick", "third_pick"],
+    },
+    handler: (args) =>
+      postAPI(`/api/competitions/${args.id}/vote`, {
+        first_pick: args.first_pick,
+        second_pick: args.second_pick,
+        third_pick: args.third_pick,
+      }),
+  },
+  {
+    name: "competition_entries",
+    description:
+      "Get blind entries for a competition (voting or completed phase). Author info is hidden during voting.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Competition UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/competitions/${args.id}/entries`),
+  },
+  {
+    name: "competition_results",
+    description:
+      "Get ranked results for a completed competition. Shows authors, points, and rankings.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Competition UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/competitions/${args.id}/results`),
+  },
+
+  // ── Groups ──
+  {
+    name: "list_groups",
+    description:
+      "List groups you are a member of. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/groups"),
+  },
+  {
+    name: "get_group",
+    description:
+      "Get details for a specific group. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.id}`),
+  },
+
+  // ── Notifications ──
+  {
+    name: "list_notifications",
+    description:
+      "List your notifications. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", description: "Max notifications (default 20)" },
+      },
+    },
+    handler: (args) => {
+      const limit = args.limit || 20;
+      return fetchAPI(`/api/notifications?limit=${limit}`);
+    },
+  },
+  {
+    name: "mark_notifications_read",
+    description:
+      "Mark all notifications as read. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => putAPI("/api/notifications/read-all"),
+  },
+
+  // ── Bookmarks ──
+  {
+    name: "list_bookmarks",
+    description:
+      "List your bookmarks. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", description: "Max bookmarks (default 20)" },
+      },
+    },
+    handler: (args) => {
+      const limit = args.limit || 20;
+      return fetchAPI(`/api/bookmarks?limit=${limit}`);
+    },
+  },
+  {
+    name: "toggle_bookmark",
+    description:
+      "Toggle a bookmark on content (monument, work, thread). Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content_type: {
+          type: "string",
+          description: "Type: monument, work, thread",
+        },
+        content_id: {
+          type: "string",
+          description: "UUID of the content to bookmark",
+        },
+      },
+      required: ["content_type", "content_id"],
+    },
+    handler: (args) =>
+      postAPI("/api/bookmarks/toggle", {
+        content_type: args.content_type,
+        content_id: args.content_id,
+      }),
   },
 
   // ── Encounters ──
