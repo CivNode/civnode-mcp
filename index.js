@@ -3,12 +3,11 @@
  * CivNode MCP Server
  *
  * A Model Context Protocol server that gives AI assistants access to
- * CivNode — a "slow web" social platform where every human gets exactly
- * one page (Monument) displayed at random. No algorithm, no likes,
- * no followers.
+ * CivNode — a social platform where every human gets exactly one page
+ * (Monument) displayed at random. No algorithm, no likes, no followers.
  *
  * 22 tools covering monuments, creative writing, forums, anonymous
- * letters, direct messaging, encounters, groups, and patron subscriptions.
+ * letters, direct messaging, encounters, groups, and supporter subscriptions.
  *
  * Usage:
  *   npx civnode-mcp
@@ -27,7 +26,7 @@
  *   }
  *
  * Public tools work without authentication. For authenticated operations
- * (publishing, messaging, patron management), provide a session token.
+ * (publishing, messaging, subscription management), provide a session token.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -452,7 +451,7 @@ const tools = [
   {
     name: "get_profile",
     description:
-      "Get a user's public profile including alias, first words, patron status, and join date.",
+      "Get a user's public profile including alias, first words, supporter status, and join date.",
     inputSchema: {
       type: "object",
       properties: {
@@ -538,18 +537,18 @@ const tools = [
     handler: () => fetchAPI("/api/presence"),
   },
 
-  // ── Patron / Stripe ──
+  // ── Supporter / Stripe ──
   {
-    name: "get_patron_status",
+    name: "get_supporter_status",
     description:
-      "Check your current patron status and account details. Requires authentication.",
+      "Check your current supporter status and account details. Requires authentication.",
     inputSchema: { type: "object", properties: {} },
     handler: () => fetchAPI("/api/auth/me"),
   },
   {
-    name: "patron_checkout",
+    name: "supporter_checkout",
     description:
-      "Create a Stripe checkout session to become a CivNode patron ($5/month). Returns a URL to complete the payment in a browser. Requires authentication.",
+      "Create a Stripe checkout session to become a CivNode supporter ($5/month). Returns a URL to complete the payment in a browser. Requires authentication.",
     inputSchema: {
       type: "object",
       properties: {
@@ -568,15 +567,15 @@ const tools = [
     handler: (args) =>
       postAPI("/api/stripe/checkout", {
         success_url:
-          args.success_url || `${API_BASE}/#settings?patron=success`,
+          args.success_url || `${API_BASE}/#settings?checkout=success`,
         cancel_url:
-          args.cancel_url || `${API_BASE}/#settings?patron=cancelled`,
+          args.cancel_url || `${API_BASE}/#settings?checkout=cancel`,
       }),
   },
   {
-    name: "patron_cancel",
+    name: "supporter_cancel",
     description:
-      "Cancel your patron subscription. Cancels at the end of the current billing period. Requires authentication.",
+      "Cancel your supporter subscription. Cancels at the end of the current billing period. Requires authentication.",
     inputSchema: { type: "object", properties: {} },
     handler: () => postAPI("/api/stripe/cancel"),
   },

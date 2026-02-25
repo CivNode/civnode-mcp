@@ -1,7 +1,7 @@
 {
   "name": "civnode-mcp",
-  "version": "1.0.0",
-  "description": "MCP server for CivNode — a slow web platform where every human gets one Monument displayed at random. Read monuments, browse writing, explore forums, send letters, and manage patron subscriptions.",
+  "version": "1.0.1",
+  "description": "MCP server for CivNode — a social platform where every human gets one Monument displayed at random. Read monuments, browse writing, explore forums, send letters, and manage subscriptions.",
   "type": "module",
   "bin": {
     "civnode-mcp": "index.js"
@@ -15,14 +15,14 @@
     "mcp",
     "model-context-protocol",
     "civnode",
-    "slow-web",
+    "social-platform",
     "social",
     "monuments",
     "writing",
     "forum",
     "letters",
     "encounters",
-    "patron",
+    "supporter",
     "stripe"
   ],
   "author": "christerso",

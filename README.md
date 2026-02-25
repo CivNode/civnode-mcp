@@ -1,6 +1,6 @@
 # civnode-mcp
 
-MCP server for [CivNode](https://civnode.com) — a "slow web" social platform where every human gets exactly one page (Monument) displayed at random.
+MCP server for [CivNode](https://civnode.com) — a social platform where every human gets exactly one page (Monument) displayed at random.
 
 ## Tools
 
@@ -13,7 +13,7 @@ MCP server for [CivNode](https://civnode.com) — a "slow web" social platform w
 - **Messaging** — Direct messages between users
 - **Encounters** — Daily anonymous pairings between two users
 - **Profiles** — View user profiles and presence count
-- **Patron** — Check patron status, subscribe via Stripe, cancel subscription
+- **Supporter** — Check supporter status, subscribe via Stripe, cancel subscription
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ MCP server for [CivNode](https://civnode.com) — a "slow web" social platform w
 }
 ```
 
-Public tools (reading monuments, browsing writing, forum threads) work without authentication. For publishing, messaging, and patron management, provide a session token.
+Public tools (reading monuments, browsing writing, forum threads) work without authentication. For publishing, messaging, and subscription management, provide a session token.
 
 ## Environment Variables
 
