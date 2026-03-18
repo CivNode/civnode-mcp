@@ -3178,17 +3178,17 @@ if (sessionToken) {
     },
     {
       name: "admin_test_ollama",
-      description: "Test local Ollama connectivity from the SERVER side. Sends a simple chat request to the Ollama instance configured in the embedding provider's base URL (minus /v1). Use to verify Ollama is reachable from Docker.",
+      description: "Test Ollama connectivity by sending a chat request. Use to verify Ollama is running and the model works. Timeout is 5 minutes to allow for model loading.",
       inputSchema: {
         type: "object",
         properties: {
-          url: { type: "string", description: "Ollama base URL (default: http://host.docker.internal:11434)" },
+          url: { type: "string", description: "Ollama base URL (default: http://localhost:11434)" },
           model: { type: "string", description: "Model to test (default: qwen3:8b)" },
           prompt: { type: "string", description: "Test prompt (default: 'Say hi in 5 words')" },
         },
       },
       handler: async (args) => {
-        const url = args.url || "http://host.docker.internal:11434";
+        const url = args.url || "http://localhost:11434";
         const model = args.model || "qwen3:8b";
         const prompt = args.prompt || "Say hi in 5 words";
         try {
@@ -3200,7 +3200,7 @@ if (sessionToken) {
               messages: [{ role: "user", content: prompt }],
               temperature: 0.7,
             }),
-            signal: AbortSignal.timeout(30000),
+            signal: AbortSignal.timeout(300000),
           });
           if (!res.ok) {
             const body = await res.text().catch(() => "");
