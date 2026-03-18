@@ -8,12 +8,16 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 56 tools covering:
- * - Creative writing: publish works, get AI feedback, title/summary suggestions
- * - World-building: characters, locations, creatures, plots, family trees
- * - Community: monuments, forums, anonymous letters, encounters, competitions
- * - Collaboration: real-time co-writing, draft sharing, workshops
- * - Platform: messaging, groups, notifications, bookmarks, subscriptions
+ * 189 tools covering:
+ * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
+ * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
+ * - Books: chapters, entity linking, cover generation, export
+ * - Research & Observatory: semantic search, chapter analysis, writing insights
+ * - Marketplace: browse, discover, and fork community creations
+ * - Community: monuments, forums, letters, encounters, competitions, topics
+ * - Collaboration: real-time co-writing, canvases, draft sharing, workshops
+ * - Platform: messaging, groups, notifications, bookmarks, highlights, subscriptions
+ * - Admin: system health, user management, moderation, bot simulation
  *
  * Usage:
  *   npx civnode-mcp
@@ -88,6 +92,15 @@ async function deleteAPI(path) {
   return handleResponse(res);
 }
 
+async function patchAPI(path, body = {}) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  });
+  return handleResponse(res);
+}
+
 async function handleResponse(res) {
   if (res.status === 204) return { ok: true };
   if (res.status === 401) {
@@ -111,7 +124,7 @@ async function handleResponse(res) {
 // ─── Server ───
 
 const server = new Server(
-  { name: "civnode", version: "1.1.0" },
+  { name: "civnode", version: "2.0.0" },
   { capabilities: { tools: {} } }
 );
 
@@ -1212,6 +1225,1733 @@ const tools = [
       required: ["work_id"],
     },
     handler: (args) => postAPI(`/api/writing/${args.work_id}/ai-suggest`, {}),
+  },
+
+  // ── Extended Writing ──
+  {
+    name: "list_my_works",
+    description:
+      "List your own writing works (drafts and published). Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", description: "Max results (default 20)" },
+      },
+    },
+    handler: (args) => {
+      const limit = args.limit || 20;
+      return fetchAPI(`/api/works/mine?limit=${limit}`);
+    },
+  },
+  {
+    name: "update_work",
+    description:
+      "Update a writing work's content, title, mood tags, or visibility. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Work UUID" },
+        title: { type: "string", description: "New title" },
+        body_markdown: { type: "string", description: "New content in Markdown" },
+        mood_tags: {
+          type: "array",
+          items: { type: "string" },
+          description: "1-3 mood tags",
+        },
+        identity_mode: {
+          type: "string",
+          description: "Identity: alias, real_name, or incognito",
+        },
+        reach: {
+          type: "string",
+          description: "Visibility: private, limited, open",
+        },
+      },
+      required: ["id"],
+    },
+    handler: (args) => {
+      const body = {};
+      if (args.title) body.title = args.title;
+      if (args.body_markdown) body.body_markdown = args.body_markdown;
+      if (args.mood_tags) body.mood_tags = args.mood_tags;
+      if (args.identity_mode) body.identity_mode = args.identity_mode;
+      if (args.reach) body.reach = args.reach;
+      return putAPI(`/api/works/${args.id}`, body);
+    },
+  },
+  {
+    name: "delete_work",
+    description:
+      "Delete a writing work permanently. Author only. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Work UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => deleteAPI(`/api/works/${args.id}`),
+  },
+  {
+    name: "export_work",
+    description: "Export a work as Markdown or other format. Author only. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Work UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/works/${args.id}/export`),
+  },
+  {
+    name: "create_series",
+    description:
+      "Create a new writing series to group related works. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Series title" },
+        description: { type: "string", description: "Series description" },
+      },
+      required: ["title"],
+    },
+    handler: (args) =>
+      postAPI("/api/works/series", {
+        title: args.title,
+        description: args.description || "",
+      }),
+  },
+  {
+    name: "list_my_series",
+    description: "List your writing series. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/works/series/mine"),
+  },
+  {
+    name: "add_work_to_series",
+    description: "Add a work to a series. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        series_id: { type: "string", description: "Series UUID" },
+        work_id: { type: "string", description: "Work UUID to add" },
+      },
+      required: ["series_id", "work_id"],
+    },
+    handler: (args) =>
+      postAPI(`/api/works/series/${args.series_id}/works/${args.work_id}`),
+  },
+
+  // ── Characters ──
+  {
+    name: "list_characters",
+    description:
+      "List your characters in the compendium. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", description: "Max results (default 50)" },
+      },
+    },
+    handler: (args) => {
+      const limit = args.limit || 50;
+      return fetchAPI(`/api/characters?limit=${limit}`);
+    },
+  },
+  {
+    name: "get_character",
+    description: "Get a character's full profile by ID. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Character UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/characters/${args.id}`),
+  },
+  {
+    name: "create_character",
+    description:
+      "Create a new character in the compendium. Only name is required — fill in other fields later or use AI. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Character name (required)" },
+        nickname: { type: "string", description: "Nickname or alias" },
+        occupation: { type: "string", description: "Occupation or role" },
+        age: { type: "string", description: "Age (free text, e.g. '34', 'elderly')" },
+        gender: { type: "string", description: "Gender" },
+        status: { type: "string", description: "Status (e.g. alive, deceased)" },
+        social_class: { type: "string", description: "Social class or station" },
+        appearance: { type: "string", description: "Physical appearance" },
+        personality: { type: "string", description: "Personality traits" },
+        motivations: { type: "string", description: "Goals and motivations" },
+        backstory: { type: "string", description: "Background story" },
+        skills: { type: "string", description: "Skills and abilities" },
+        notes: { type: "string", description: "Additional notes" },
+        worldview: { type: "string", description: "Worldview and beliefs" },
+        voice: { type: "string", description: "Speech patterns and voice" },
+        era: { type: "string", description: "Time period" },
+        tags: {
+          type: "array",
+          items: { type: "string" },
+          description: "Tags for categorization",
+        },
+      },
+      required: ["name"],
+    },
+    handler: (args) => postAPI("/api/characters", args),
+  },
+  {
+    name: "update_character",
+    description:
+      "Update a character's fields. Pass only the fields you want to change. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Character UUID" },
+        name: { type: "string", description: "Character name" },
+        nickname: { type: "string", description: "Nickname" },
+        occupation: { type: "string", description: "Occupation" },
+        age: { type: "string", description: "Age" },
+        gender: { type: "string", description: "Gender" },
+        status: { type: "string", description: "Status" },
+        social_class: { type: "string", description: "Social class" },
+        appearance: { type: "string", description: "Appearance" },
+        personality: { type: "string", description: "Personality" },
+        motivations: { type: "string", description: "Motivations" },
+        backstory: { type: "string", description: "Backstory" },
+        skills: { type: "string", description: "Skills" },
+        notes: { type: "string", description: "Notes" },
+        worldview: { type: "string", description: "Worldview" },
+        voice: { type: "string", description: "Voice" },
+        era: { type: "string", description: "Era" },
+        tags: {
+          type: "array",
+          items: { type: "string" },
+          description: "Tags",
+        },
+      },
+      required: ["id"],
+    },
+    handler: (args) => {
+      const { id, ...fields } = args;
+      return putAPI(`/api/characters/${id}`, fields);
+    },
+  },
+  {
+    name: "delete_character",
+    description: "Delete a character permanently. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Character UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => deleteAPI(`/api/characters/${args.id}`),
+  },
+  {
+    name: "ai_generate_character",
+    description:
+      "Generate a complete character using AI. Provide optional hints for role, genre, and setting. Requires authentication and an AI provider configured.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        role: { type: "string", description: "Character role (e.g. 'reluctant hero', 'merchant')" },
+        genre: { type: "string", description: "Genre (e.g. 'fantasy', 'noir', 'sci-fi')" },
+        setting: { type: "string", description: "Setting context" },
+      },
+    },
+    handler: (args) =>
+      postAPI("/api/characters/ai-generate", {
+        role: args.role || "",
+        genre: args.genre || "",
+        setting: args.setting || "",
+      }),
+  },
+  {
+    name: "character_portrait_generate",
+    description:
+      "Generate an AI portrait for a character. Requires authentication and an image provider configured.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Character UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/characters/${args.id}/portrait/generate`),
+  },
+  {
+    name: "character_suggestions",
+    description:
+      "Get AI suggestions for a specific character field. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Character UUID" },
+        field: {
+          type: "string",
+          enum: ["appearance", "personality", "backstory", "motivations", "skills", "notes"],
+          description: "Which field to get suggestions for",
+        },
+      },
+      required: ["id", "field"],
+    },
+    handler: (args) =>
+      postAPI(`/api/characters/${args.id}/suggestions`, { field: args.field }),
+  },
+  {
+    name: "character_publish",
+    description:
+      "Publish a character to the marketplace for others to discover and fork. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Character UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/characters/${args.id}/publish`),
+  },
+  {
+    name: "character_unpublish",
+    description: "Remove a character from the marketplace. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Character UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/characters/${args.id}/unpublish`),
+  },
+  {
+    name: "character_relationships",
+    description: "Get all relationships for a character. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Character UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/characters/${args.id}/relationships`),
+  },
+
+  // ── Locations ──
+  {
+    name: "list_locations",
+    description: "List your locations in the compendium. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", description: "Max results (default 50)" },
+      },
+    },
+    handler: (args) => {
+      const limit = args.limit || 50;
+      return fetchAPI(`/api/locations?limit=${limit}`);
+    },
+  },
+  {
+    name: "get_location",
+    description: "Get a location's full details by ID. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Location UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/locations/${args.id}`),
+  },
+  {
+    name: "create_location",
+    description:
+      "Create a new location in the compendium. Only name is required. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Location name (required)" },
+        description: { type: "string", description: "General description" },
+        atmosphere: { type: "string", description: "Mood and atmosphere" },
+        sensory_details: { type: "string", description: "Sights, sounds, smells" },
+        notable_features: { type: "string", description: "Key landmarks or features" },
+        inhabitants: { type: "string", description: "Who lives or works here" },
+        secrets: { type: "string", description: "Hidden aspects" },
+        era: { type: "string", description: "Time period" },
+        location_type: { type: "string", description: "Type (e.g. city, forest, castle)" },
+        notes: { type: "string", description: "Additional notes" },
+        tags: {
+          type: "array",
+          items: { type: "string" },
+          description: "Tags for categorization",
+        },
+      },
+      required: ["name"],
+    },
+    handler: (args) => postAPI("/api/locations", args),
+  },
+  {
+    name: "update_location",
+    description:
+      "Update a location's fields. Pass only the fields to change. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Location UUID" },
+        name: { type: "string", description: "Location name" },
+        description: { type: "string", description: "Description" },
+        atmosphere: { type: "string", description: "Atmosphere" },
+        sensory_details: { type: "string", description: "Sensory details" },
+        notable_features: { type: "string", description: "Notable features" },
+        inhabitants: { type: "string", description: "Inhabitants" },
+        secrets: { type: "string", description: "Secrets" },
+        era: { type: "string", description: "Era" },
+        location_type: { type: "string", description: "Location type" },
+        notes: { type: "string", description: "Notes" },
+        tags: {
+          type: "array",
+          items: { type: "string" },
+          description: "Tags",
+        },
+      },
+      required: ["id"],
+    },
+    handler: (args) => {
+      const { id, ...fields } = args;
+      return putAPI(`/api/locations/${id}`, fields);
+    },
+  },
+  {
+    name: "delete_location",
+    description: "Delete a location permanently. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Location UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => deleteAPI(`/api/locations/${args.id}`),
+  },
+  {
+    name: "location_ai_fill",
+    description:
+      "Use AI to fill in missing details for a location based on its name and existing fields. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Location UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/locations/${args.id}/ai-fill`),
+  },
+  {
+    name: "location_ai_image",
+    description:
+      "Generate an AI image for a location. Requires authentication and an image provider configured.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Location UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/locations/${args.id}/ai-image`),
+  },
+  {
+    name: "location_publish",
+    description: "Publish a location to the marketplace. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Location UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/locations/${args.id}/publish`),
+  },
+  {
+    name: "location_unpublish",
+    description: "Remove a location from the marketplace. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Location UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/locations/${args.id}/unpublish`),
+  },
+  {
+    name: "get_location_blueprint",
+    description: "Get the visual blueprint/map for a location. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Location UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/locations/${args.id}/blueprint`),
+  },
+
+  // ── Creatures ──
+  {
+    name: "list_creatures",
+    description: "List your creatures in the compendium. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", description: "Max results (default 50)" },
+      },
+    },
+    handler: (args) => {
+      const limit = args.limit || 50;
+      return fetchAPI(`/api/creatures?limit=${limit}`);
+    },
+  },
+  {
+    name: "get_creature",
+    description: "Get a creature's full profile by ID. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Creature UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/creatures/${args.id}`),
+  },
+  {
+    name: "create_creature",
+    description:
+      "Create a new creature in the compendium. Name and species_type required. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Creature name (required)" },
+        species_type: { type: "string", description: "Species type (required, e.g. 'dragon', 'familiar')" },
+        description: { type: "string", description: "General description" },
+        habitat: { type: "string", description: "Natural habitat" },
+        behavior: { type: "string", description: "Behavioral patterns" },
+        abilities: { type: "string", description: "Special abilities" },
+        weaknesses: { type: "string", description: "Weaknesses" },
+        personality: { type: "string", description: "Personality traits" },
+        motivations: { type: "string", description: "Drives and goals" },
+        backstory: { type: "string", description: "Origin story" },
+        lore: { type: "string", description: "Cultural lore and legends" },
+        threat_level: { type: "string", description: "Threat level" },
+        era: { type: "string", description: "Time period" },
+        notes: { type: "string", description: "Additional notes" },
+        tags: {
+          type: "array",
+          items: { type: "string" },
+          description: "Tags",
+        },
+      },
+      required: ["name", "species_type"],
+    },
+    handler: (args) => postAPI("/api/creatures", args),
+  },
+  {
+    name: "update_creature",
+    description:
+      "Update a creature's fields. Pass only the fields to change. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Creature UUID" },
+        name: { type: "string", description: "Name" },
+        species_type: { type: "string", description: "Species type" },
+        description: { type: "string", description: "Description" },
+        habitat: { type: "string", description: "Habitat" },
+        behavior: { type: "string", description: "Behavior" },
+        abilities: { type: "string", description: "Abilities" },
+        weaknesses: { type: "string", description: "Weaknesses" },
+        personality: { type: "string", description: "Personality" },
+        motivations: { type: "string", description: "Motivations" },
+        backstory: { type: "string", description: "Backstory" },
+        lore: { type: "string", description: "Lore" },
+        threat_level: { type: "string", description: "Threat level" },
+        era: { type: "string", description: "Era" },
+        notes: { type: "string", description: "Notes" },
+        tags: {
+          type: "array",
+          items: { type: "string" },
+          description: "Tags",
+        },
+      },
+      required: ["id"],
+    },
+    handler: (args) => {
+      const { id, ...fields } = args;
+      return putAPI(`/api/creatures/${id}`, fields);
+    },
+  },
+  {
+    name: "delete_creature",
+    description: "Delete a creature permanently. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Creature UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => deleteAPI(`/api/creatures/${args.id}`),
+  },
+  {
+    name: "ai_generate_creature",
+    description:
+      "Generate a complete creature using AI. Provide optional hints. Requires authentication and an AI provider.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        species_type: { type: "string", description: "Type of creature (e.g. 'dragon', 'spirit beast')" },
+        habitat_type: { type: "string", description: "Habitat (e.g. 'deep ocean', 'volcanic')" },
+        era: { type: "string", description: "Time period" },
+      },
+    },
+    handler: (args) =>
+      postAPI("/api/creatures/ai-generate", {
+        species_type: args.species_type || "",
+        habitat_type: args.habitat_type || "",
+        era: args.era || "",
+      }),
+  },
+  {
+    name: "creature_ai_image",
+    description:
+      "Generate an AI image for a creature. Requires authentication and an image provider.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Creature UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/creatures/${args.id}/ai-image`),
+  },
+  {
+    name: "creature_portrait_generate",
+    description:
+      "Generate an AI portrait for a creature. Requires authentication and an image provider.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Creature UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/creatures/${args.id}/portrait/generate`),
+  },
+  {
+    name: "creature_publish",
+    description: "Publish a creature to the marketplace. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Creature UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/creatures/${args.id}/publish`),
+  },
+  {
+    name: "creature_unpublish",
+    description: "Remove a creature from the marketplace. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Creature UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/creatures/${args.id}/unpublish`),
+  },
+  {
+    name: "creature_suggestions",
+    description:
+      "Get AI suggestions for a creature field. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Creature UUID" },
+        field: {
+          type: "string",
+          description: "Field to get suggestions for",
+        },
+      },
+      required: ["id", "field"],
+    },
+    handler: (args) =>
+      postAPI(`/api/creatures/${args.id}/suggestions`, { field: args.field }),
+  },
+
+  // ── Plots ──
+  {
+    name: "list_plots",
+    description: "List your plots in the compendium. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", description: "Max results (default 50)" },
+      },
+    },
+    handler: (args) => {
+      const limit = args.limit || 50;
+      return fetchAPI(`/api/plots?limit=${limit}`);
+    },
+  },
+  {
+    name: "get_plot",
+    description: "Get a plot's full details including acts, scenes, and beats. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Plot UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/plots/${args.id}`),
+  },
+  {
+    name: "create_plot",
+    description:
+      "Create a new plot in the compendium. Only title is required. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Plot title (required)" },
+        genre: { type: "string", description: "Genre (e.g. fantasy, thriller)" },
+        tone: { type: "string", description: "Narrative tone" },
+        setting_summary: { type: "string", description: "Brief setting description" },
+        central_conflict: { type: "string", description: "Core conflict" },
+        plot_style: { type: "string", description: "Plot structure style" },
+        notes: { type: "string", description: "Additional notes" },
+        tags: {
+          type: "array",
+          items: { type: "string" },
+          description: "Tags",
+        },
+      },
+      required: ["title"],
+    },
+    handler: (args) => postAPI("/api/plots", args),
+  },
+  {
+    name: "update_plot",
+    description:
+      "Update a plot's fields. Pass only the fields to change. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Plot UUID" },
+        title: { type: "string", description: "Title" },
+        genre: { type: "string", description: "Genre" },
+        tone: { type: "string", description: "Tone" },
+        setting_summary: { type: "string", description: "Setting summary" },
+        central_conflict: { type: "string", description: "Central conflict" },
+        plot_style: { type: "string", description: "Plot style" },
+        notes: { type: "string", description: "Notes" },
+        tags: {
+          type: "array",
+          items: { type: "string" },
+          description: "Tags",
+        },
+      },
+      required: ["id"],
+    },
+    handler: (args) => {
+      const { id, ...fields } = args;
+      return putAPI(`/api/plots/${id}`, fields);
+    },
+  },
+  {
+    name: "delete_plot",
+    description: "Delete a plot permanently. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Plot UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => deleteAPI(`/api/plots/${args.id}`),
+  },
+  {
+    name: "plot_add_act",
+    description:
+      "Add an act to a plot. Acts are the top-level structure of a plot. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        plot_id: { type: "string", description: "Plot UUID" },
+        title: { type: "string", description: "Act title (required)" },
+        summary: { type: "string", description: "Act summary" },
+        purpose: { type: "string", description: "Narrative purpose" },
+        notes: { type: "string", description: "Notes" },
+      },
+      required: ["plot_id", "title"],
+    },
+    handler: (args) =>
+      postAPI(`/api/plots/${args.plot_id}/acts`, {
+        title: args.title,
+        summary: args.summary || "",
+        purpose: args.purpose || "",
+        notes: args.notes || "",
+      }),
+  },
+  {
+    name: "plot_ai_acts",
+    description:
+      "Generate acts for a plot using AI. Requires authentication and an AI provider.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Plot UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/plots/${args.id}/ai-acts`),
+  },
+  {
+    name: "plot_add_scene",
+    description:
+      "Add a scene to a plot act. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        plot_id: { type: "string", description: "Plot UUID" },
+        act_id: { type: "string", description: "Act UUID" },
+        title: { type: "string", description: "Scene title (required)" },
+        summary: { type: "string", description: "Scene summary" },
+        notes: { type: "string", description: "Notes" },
+      },
+      required: ["plot_id", "act_id", "title"],
+    },
+    handler: (args) =>
+      postAPI(`/api/plots/${args.plot_id}/acts/${args.act_id}/scenes`, {
+        title: args.title,
+        summary: args.summary || "",
+        notes: args.notes || "",
+      }),
+  },
+  {
+    name: "plot_ai_scenes",
+    description:
+      "Generate scenes for a plot act using AI. Requires authentication and an AI provider.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        plot_id: { type: "string", description: "Plot UUID" },
+        act_id: { type: "string", description: "Act UUID" },
+      },
+      required: ["plot_id", "act_id"],
+    },
+    handler: (args) =>
+      postAPI(`/api/plots/${args.plot_id}/acts/${args.act_id}/ai-scenes`),
+  },
+  {
+    name: "plot_ai_image",
+    description:
+      "Generate an AI image for a plot. Requires authentication and an image provider.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Plot UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/plots/${args.id}/ai-image`),
+  },
+  {
+    name: "plot_publish",
+    description: "Publish a plot to the marketplace. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Plot UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/plots/${args.id}/publish`),
+  },
+  {
+    name: "plot_unpublish",
+    description: "Remove a plot from the marketplace. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Plot UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/plots/${args.id}/unpublish`),
+  },
+
+  // ── Family Trees ──
+  {
+    name: "list_trees",
+    description: "List your family trees. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/trees"),
+  },
+  {
+    name: "get_tree_members",
+    description: "Get all members (characters and creatures) in a family tree. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Tree UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/trees/${args.id}/members`),
+  },
+  {
+    name: "create_tree",
+    description: "Create a new family tree. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Tree name (required)" },
+        description: { type: "string", description: "Tree description" },
+      },
+      required: ["name"],
+    },
+    handler: (args) =>
+      postAPI("/api/trees", {
+        name: args.name,
+        description: args.description || "",
+      }),
+  },
+  {
+    name: "update_tree",
+    description: "Update a family tree's name or description. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Tree UUID" },
+        name: { type: "string", description: "New name" },
+        description: { type: "string", description: "New description" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => {
+      const { id, ...fields } = args;
+      return putAPI(`/api/trees/${id}`, fields);
+    },
+  },
+  {
+    name: "delete_tree",
+    description: "Delete a family tree permanently. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Tree UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => deleteAPI(`/api/trees/${args.id}`),
+  },
+  {
+    name: "tree_add_member",
+    description:
+      "Add a character or creature to a family tree. Provide either character_id or creature_id. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        tree_id: { type: "string", description: "Tree UUID" },
+        character_id: { type: "string", description: "Character UUID (provide this OR creature_id)" },
+        creature_id: { type: "string", description: "Creature UUID (provide this OR character_id)" },
+        pos_x: { type: "number", description: "X position on the tree (default 0)" },
+        pos_y: { type: "number", description: "Y position on the tree (default 0)" },
+      },
+      required: ["tree_id"],
+    },
+    handler: (args) => {
+      const body = {};
+      if (args.character_id) body.character_id = args.character_id;
+      if (args.creature_id) body.creature_id = args.creature_id;
+      body.pos_x = args.pos_x || 0;
+      body.pos_y = args.pos_y || 0;
+      return postAPI(`/api/trees/${args.tree_id}/members`, body);
+    },
+  },
+  {
+    name: "tree_generate",
+    description:
+      "Generate family tree members using AI based on existing characters. Requires authentication and an AI provider.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Tree UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/trees/${args.id}/generate`),
+  },
+  {
+    name: "tree_publish",
+    description: "Publish a family tree to the marketplace. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Tree UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/trees/${args.id}/publish`),
+  },
+  {
+    name: "tree_unpublish",
+    description: "Remove a family tree from the marketplace. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Tree UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/trees/${args.id}/unpublish`),
+  },
+
+  // ── Books ──
+  {
+    name: "list_books",
+    description: "List your books. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/books"),
+  },
+  {
+    name: "get_book",
+    description: "Get a book's details including metadata and linked entities. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Book UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/books/${args.id}`),
+  },
+  {
+    name: "create_book",
+    description:
+      "Create a new book. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Book title (required)" },
+        book_type: {
+          type: "string",
+          description: "Type: novel, novella, short_story_collection, poetry_collection, anthology, other (required)",
+        },
+      },
+      required: ["title", "book_type"],
+    },
+    handler: (args) =>
+      postAPI("/api/books", {
+        title: args.title,
+        book_type: args.book_type,
+      }),
+  },
+  {
+    name: "update_book",
+    description:
+      "Update a book's metadata. Pass only fields to change. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Book UUID" },
+        title: { type: "string", description: "Title" },
+        subtitle: { type: "string", description: "Subtitle" },
+        blurb: { type: "string", description: "Book blurb/description" },
+        book_type: { type: "string", description: "Book type" },
+        genre: { type: "string", description: "Genre" },
+        author_name: { type: "string", description: "Author display name" },
+        target_word_count: { type: "integer", description: "Target word count" },
+        published: { type: "boolean", description: "Whether the book is published" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => {
+      const { id, ...fields } = args;
+      return patchAPI(`/api/books/${id}`, fields);
+    },
+  },
+  {
+    name: "delete_book",
+    description: "Delete a book and all its chapters. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Book UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => deleteAPI(`/api/books/${args.id}`),
+  },
+  {
+    name: "list_chapters",
+    description: "List all chapters in a book. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+      },
+      required: ["book_id"],
+    },
+    handler: (args) => fetchAPI(`/api/books/${args.book_id}/chapters`),
+  },
+  {
+    name: "get_chapter",
+    description: "Get a chapter's content and metadata. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+        chapter_id: { type: "string", description: "Chapter UUID" },
+      },
+      required: ["book_id", "chapter_id"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/books/${args.book_id}/chapters/${args.chapter_id}`),
+  },
+  {
+    name: "create_chapter",
+    description: "Create a new chapter in a book. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+        title: { type: "string", description: "Chapter title (required)" },
+        chapter_type: {
+          type: "string",
+          description: "Type: chapter, prologue, epilogue, interlude, appendix (required)",
+        },
+      },
+      required: ["book_id", "title", "chapter_type"],
+    },
+    handler: (args) =>
+      postAPI(`/api/books/${args.book_id}/chapters`, {
+        title: args.title,
+        chapter_type: args.chapter_type,
+      }),
+  },
+  {
+    name: "update_chapter",
+    description:
+      "Update a chapter's content or metadata. Pass only fields to change. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+        chapter_id: { type: "string", description: "Chapter UUID" },
+        title: { type: "string", description: "Chapter title" },
+        subtitle: { type: "string", description: "Chapter subtitle" },
+        chapter_type: { type: "string", description: "Chapter type" },
+        status: { type: "string", description: "Status: draft, revision, final" },
+      },
+      required: ["book_id", "chapter_id"],
+    },
+    handler: (args) => {
+      const { book_id, chapter_id, ...fields } = args;
+      return patchAPI(`/api/books/${book_id}/chapters/${chapter_id}`, fields);
+    },
+  },
+  {
+    name: "delete_chapter",
+    description: "Delete a chapter from a book. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+        chapter_id: { type: "string", description: "Chapter UUID" },
+      },
+      required: ["book_id", "chapter_id"],
+    },
+    handler: (args) =>
+      deleteAPI(`/api/books/${args.book_id}/chapters/${args.chapter_id}`),
+  },
+  {
+    name: "reorder_chapters",
+    description: "Reorder chapters in a book. Provide the chapter IDs in the desired order. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+        chapter_ids: {
+          type: "array",
+          items: { type: "string" },
+          description: "Chapter UUIDs in desired order",
+        },
+      },
+      required: ["book_id", "chapter_ids"],
+    },
+    handler: (args) =>
+      putAPI(`/api/books/${args.book_id}/chapters/reorder`, {
+        chapter_ids: args.chapter_ids,
+      }),
+  },
+  {
+    name: "book_link_entity",
+    description:
+      "Link a compendium entity (character, creature, location, plot, or family tree) to a book. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+        entity_type: {
+          type: "string",
+          enum: ["characters", "creatures", "locations", "plots", "trees"],
+          description: "Entity type to link",
+        },
+        entity_id: { type: "string", description: "Entity UUID" },
+      },
+      required: ["book_id", "entity_type", "entity_id"],
+    },
+    handler: (args) =>
+      postAPI(`/api/books/${args.book_id}/${args.entity_type}`, {
+        id: args.entity_id,
+      }),
+  },
+  {
+    name: "book_unlink_entity",
+    description:
+      "Remove a linked entity from a book. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+        entity_type: {
+          type: "string",
+          enum: ["characters", "creatures", "locations", "plots", "trees"],
+          description: "Entity type",
+        },
+        entity_id: { type: "string", description: "Entity UUID" },
+      },
+      required: ["book_id", "entity_type", "entity_id"],
+    },
+    handler: (args) =>
+      deleteAPI(
+        `/api/books/${args.book_id}/${args.entity_type}/${args.entity_id}`
+      ),
+  },
+  {
+    name: "export_book",
+    description: "Export a book's content. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Book UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/books/${args.id}/export`),
+  },
+  {
+    name: "get_public_book",
+    description: "Get a published book's public information (no auth required).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Book UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/books/${args.id}/public`),
+  },
+
+  // ── Canvases ──
+  {
+    name: "list_canvases",
+    description: "List your canvases (collaborative drawing boards). Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/canvases/mine"),
+  },
+  {
+    name: "get_canvas",
+    description: "Get a canvas with its nodes and metadata. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Canvas UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/canvases/${args.id}`),
+  },
+  {
+    name: "create_canvas",
+    description: "Create a new canvas in a group. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        group_id: { type: "string", description: "Group UUID (required)" },
+        name: { type: "string", description: "Canvas name (required)" },
+      },
+      required: ["group_id", "name"],
+    },
+    handler: (args) =>
+      postAPI(`/api/groups/${args.group_id}/canvases`, {
+        name: args.name,
+      }),
+  },
+  {
+    name: "update_canvas",
+    description: "Update a canvas name. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Canvas UUID" },
+        name: { type: "string", description: "New name (required)" },
+      },
+      required: ["id", "name"],
+    },
+    handler: (args) =>
+      putAPI(`/api/canvases/${args.id}`, { name: args.name }),
+  },
+  {
+    name: "delete_canvas",
+    description: "Delete a canvas permanently. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Canvas UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => deleteAPI(`/api/canvases/${args.id}`),
+  },
+
+  // ── Research ──
+  {
+    name: "research_search",
+    description:
+      "Semantic search across your research notes, highlights, and analyzed content. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        owner_id: { type: "string", description: "Work or book UUID that owns the research" },
+        query: { type: "string", description: "Search query (required)" },
+        limit: { type: "integer", description: "Max results (default 10)" },
+      },
+      required: ["owner_id", "query"],
+    },
+    handler: (args) =>
+      postAPI(`/api/research/${args.owner_id}/search`, {
+        query: args.query,
+        limit: args.limit || 10,
+      }),
+  },
+  {
+    name: "research_analyze_chapter",
+    description:
+      "Analyze a chapter for characters, themes, plot points, and relationships. Requires authentication and an AI provider.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        owner_id: { type: "string", description: "Book UUID" },
+        chapter_id: { type: "string", description: "Chapter UUID" },
+      },
+      required: ["owner_id", "chapter_id"],
+    },
+    handler: (args) =>
+      postAPI(
+        `/api/research/${args.owner_id}/chapters/${args.chapter_id}/analyze`
+      ),
+  },
+  {
+    name: "research_intelligence",
+    description:
+      "Get aggregated intelligence about a work: character appearances, themes, timeline. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        owner_id: { type: "string", description: "Work or book UUID" },
+      },
+      required: ["owner_id"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/research/${args.owner_id}/intelligence`),
+  },
+  {
+    name: "research_character_graph",
+    description:
+      "Get a character's relationship graph and arc across the work. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        owner_id: { type: "string", description: "Work or book UUID" },
+        character_name: {
+          type: "string",
+          description: "Character name as it appears in the text",
+        },
+      },
+      required: ["owner_id", "character_name"],
+    },
+    handler: (args) =>
+      fetchAPI(
+        `/api/research/${args.owner_id}/graph/character/${encodeURIComponent(args.character_name)}`
+      ),
+  },
+
+  // ── Observatory (Insights) ──
+  {
+    name: "observatory_insights",
+    description:
+      "Get writing insights and patterns discovered from your work. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", description: "Max insights (default 20)" },
+      },
+    },
+    handler: (args) => {
+      const limit = args.limit || 20;
+      return fetchAPI(`/api/observatory/insights?limit=${limit}`);
+    },
+  },
+  {
+    name: "observatory_stats",
+    description:
+      "Get writing statistics: word counts, writing streaks, productivity patterns. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/observatory/stats"),
+  },
+  {
+    name: "observatory_moments",
+    description:
+      "Get notable moments from your writing — breakthroughs, milestones, and patterns. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", description: "Max moments (default 20)" },
+      },
+    },
+    handler: (args) => {
+      const limit = args.limit || 20;
+      return fetchAPI(`/api/observatory/moments?limit=${limit}`);
+    },
+  },
+  {
+    name: "observatory_ask",
+    description:
+      "Ask the observatory a question about your writing patterns, character development, or story structure. Requires authentication and an AI provider.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        question: {
+          type: "string",
+          description: "Your question about your writing (required)",
+        },
+      },
+      required: ["question"],
+    },
+    handler: (args) =>
+      postAPI("/api/observatory/ask", { question: args.question }),
+  },
+  {
+    name: "observatory_summary",
+    description:
+      "Get an AI-generated summary of your writing journey and progress. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/observatory/summary"),
+  },
+
+  // ── Marketplace ──
+  {
+    name: "marketplace_browse",
+    description:
+      "Browse the marketplace for published characters, creatures, locations, plots, families, or books.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        entity_type: {
+          type: "string",
+          enum: ["characters", "creatures", "locations", "plots", "families", "books"],
+          description: "Type of entity to browse (required)",
+        },
+        limit: { type: "integer", description: "Max results (default 20)" },
+      },
+      required: ["entity_type"],
+    },
+    handler: (args) => {
+      const limit = args.limit || 20;
+      return fetchAPI(
+        `/api/marketplace/${args.entity_type}?limit=${limit}`
+      );
+    },
+  },
+  {
+    name: "marketplace_get",
+    description: "Get detailed view of a marketplace item.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        entity_type: {
+          type: "string",
+          enum: ["characters", "creatures", "locations", "plots", "families"],
+          description: "Entity type",
+        },
+        id: { type: "string", description: "Entity UUID" },
+      },
+      required: ["entity_type", "id"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/marketplace/${args.entity_type}/${args.id}`),
+  },
+  {
+    name: "marketplace_fork",
+    description:
+      "Fork (copy) a marketplace item into your compendium. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        entity_type: {
+          type: "string",
+          enum: ["characters", "creatures", "locations", "plots", "families"],
+          description: "Entity type to fork",
+        },
+        id: { type: "string", description: "Entity UUID to fork" },
+      },
+      required: ["entity_type", "id"],
+    },
+    handler: (args) =>
+      postAPI(`/api/marketplace/${args.entity_type}/${args.id}/fork`),
+  },
+
+  // ── Personal Letters ──
+  {
+    name: "personal_letter_inbox",
+    description:
+      "Get your personal letter inbox. Personal letters are direct, non-anonymous messages between users. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", description: "Max letters (default 20)" },
+      },
+    },
+    handler: (args) => {
+      const limit = args.limit || 20;
+      return fetchAPI(`/api/letters/personal/inbox?limit=${limit}`);
+    },
+  },
+  {
+    name: "personal_letter_sent",
+    description: "Get your sent personal letters. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", description: "Max letters (default 20)" },
+      },
+    },
+    handler: (args) => {
+      const limit = args.limit || 20;
+      return fetchAPI(`/api/letters/personal/sent?limit=${limit}`);
+    },
+  },
+  {
+    name: "send_personal_letter",
+    description:
+      "Send a personal letter to another user. Unlike monument letters, these are not anonymous. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        recipient_alias: {
+          type: "string",
+          description: "Recipient's alias (required)",
+        },
+        body: {
+          type: "string",
+          description: "Letter content (required)",
+        },
+      },
+      required: ["recipient_alias", "body"],
+    },
+    handler: (args) =>
+      postAPI("/api/letters/personal", {
+        recipient_alias: args.recipient_alias,
+        body: args.body,
+      }),
+  },
+  {
+    name: "read_personal_letter",
+    description: "Read a specific personal letter. Marks it as read. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Letter UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/letters/personal/${args.id}`),
+  },
+
+  // ── Topics ──
+  {
+    name: "list_topics",
+    description: "List available topics (interest-based communities).",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/topics"),
+  },
+  {
+    name: "join_topic",
+    description: "Join a topic community. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Topic UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/topics/${args.id}/join`),
+  },
+  {
+    name: "leave_topic",
+    description: "Leave a topic community. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Topic UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/topics/${args.id}/leave`),
+  },
+
+  // ── Highlights ──
+  {
+    name: "list_highlights",
+    description:
+      "List your text highlights across monuments and works. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/highlights"),
+  },
+  {
+    name: "create_highlight",
+    description:
+      "Create a text highlight on a monument or work. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content_type: {
+          type: "string",
+          enum: ["monument", "work"],
+          description: "Type of content to highlight",
+        },
+        content_id: { type: "string", description: "Content UUID" },
+        color: {
+          type: "string",
+          description: "Highlight color (e.g. 'yellow', 'green', 'blue', 'pink')",
+        },
+        text_fragment: {
+          type: "string",
+          description: "The highlighted text",
+        },
+        start_offset: { type: "integer", description: "Start character offset" },
+        end_offset: { type: "integer", description: "End character offset" },
+      },
+      required: [
+        "content_type",
+        "content_id",
+        "color",
+        "text_fragment",
+        "start_offset",
+        "end_offset",
+      ],
+    },
+    handler: (args) =>
+      postAPI("/api/highlights", {
+        content_type: args.content_type,
+        content_id: args.content_id,
+        color: args.color,
+        text_fragment: args.text_fragment,
+        start_offset: args.start_offset,
+        end_offset: args.end_offset,
+      }),
+  },
+  {
+    name: "delete_highlight",
+    description: "Delete a highlight. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Highlight UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => deleteAPI(`/api/highlights/${args.id}`),
+  },
+
+  // ── Users (Extended) ──
+  {
+    name: "search_users",
+    description: "Search for users by alias or name.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        q: { type: "string", description: "Search query (required)" },
+        limit: { type: "integer", description: "Max results (default 10)" },
+      },
+      required: ["q"],
+    },
+    handler: (args) => {
+      const params = new URLSearchParams({ q: args.q });
+      if (args.limit) params.set("limit", String(args.limit));
+      return fetchAPI(`/api/users/search?${params}`);
+    },
+  },
+  {
+    name: "get_notepad",
+    description:
+      "Get your personal notepad content. A private scratchpad for ideas. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/users/notepad"),
+  },
+  {
+    name: "update_notepad",
+    description:
+      "Update your personal notepad content. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content: {
+          type: "string",
+          description: "Notepad content in Markdown",
+        },
+      },
+      required: ["content"],
+    },
+    handler: (args) =>
+      putAPI("/api/users/notepad", { content: args.content }),
+  },
+  {
+    name: "search_content",
+    description:
+      "Search across all public content on CivNode — monuments, works, forum threads, and more.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        q: { type: "string", description: "Search query (required)" },
+        limit: { type: "integer", description: "Max results (default 20)" },
+      },
+      required: ["q"],
+    },
+    handler: (args) => {
+      const params = new URLSearchParams({ q: args.q });
+      if (args.limit) params.set("limit", String(args.limit));
+      return fetchAPI(`/api/search?${params}`);
+    },
   },
 ];
 
