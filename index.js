@@ -6,9 +6,10 @@
  * CivNode — a social platform where every human gets exactly one page
  * (Monument) displayed at random. No algorithm, no likes, no followers.
  *
- * 35 tools covering monuments, creative writing, forums, anonymous
+ * 52 tools covering monuments, creative writing, forums, anonymous
  * letters, direct messaging, encounters, groups, competitions,
- * notifications, bookmarks, and supporter subscriptions.
+ * notifications, bookmarks, supporter subscriptions, writing comments,
+ * draft sharing, collaborators, workshops, and AI writing tools.
  *
  * Usage:
  *   npx civnode-mcp
@@ -898,7 +899,582 @@ const tools = [
     inputSchema: { type: "object", properties: {} },
     handler: () => postAPI("/api/stripe/cancel"),
   },
+
+  // ─── Writing Comments ───
+  {
+    name: "list_comments",
+    description: "List all comments on a creative writing piece.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        work_id: { type: "string", description: "UUID of the writing work" },
+      },
+      required: ["work_id"],
+    },
+    handler: (args) => fetchAPI(`/api/writing/${args.work_id}/comments`),
+  },
+  {
+    name: "create_comment",
+    description:
+      "Add a comment to a writing piece. Optionally reference a text selection. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        work_id: { type: "string", description: "UUID of the writing work" },
+        body: { type: "string", description: "Comment text (max 2000 chars)" },
+        parent_id: {
+          type: "string",
+          description: "UUID of parent comment for replies (optional)",
+        },
+        sel_start: {
+          type: "number",
+          description: "Start position of selected text (optional)",
+        },
+        sel_end: {
+          type: "number",
+          description: "End position of selected text (optional)",
+        },
+        sel_text: {
+          type: "string",
+          description: "The selected text being commented on (optional)",
+        },
+      },
+      required: ["work_id", "body"],
+    },
+    handler: (args) =>
+      postAPI(`/api/writing/${args.work_id}/comments`, {
+        body: args.body,
+        parent_id: args.parent_id || null,
+        sel_start: args.sel_start ?? null,
+        sel_end: args.sel_end ?? null,
+        sel_text: args.sel_text || null,
+      }),
+  },
+  {
+    name: "delete_comment",
+    description:
+      "Delete a comment (own comments or work author can delete any). Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        comment_id: { type: "string", description: "UUID of the comment" },
+      },
+      required: ["comment_id"],
+    },
+    handler: (args) => deleteAPI(`/api/writing/comments/${args.comment_id}`),
+  },
+
+  // ─── Draft Sharing ───
+  {
+    name: "create_share_link",
+    description:
+      "Generate a shareable link for a writing piece. Author only. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        work_id: { type: "string", description: "UUID of the writing work" },
+      },
+      required: ["work_id"],
+    },
+    handler: (args) => postAPI(`/api/writing/${args.work_id}/share`),
+  },
+  {
+    name: "list_share_links",
+    description:
+      "List all share links for a writing piece. Author only. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        work_id: { type: "string", description: "UUID of the writing work" },
+      },
+      required: ["work_id"],
+    },
+    handler: (args) => fetchAPI(`/api/writing/${args.work_id}/shares`),
+  },
+  {
+    name: "get_shared_work",
+    description: "Read a shared writing piece by its share token.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        token: { type: "string", description: "Share token" },
+      },
+      required: ["token"],
+    },
+    handler: (args) => fetchAPI(`/api/writing/shared/${args.token}`),
+  },
+  {
+    name: "delete_share_link",
+    description:
+      "Delete a share link. Author only. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        share_id: { type: "string", description: "UUID of the share link" },
+      },
+      required: ["share_id"],
+    },
+    handler: (args) => deleteAPI(`/api/writing/shares/${args.share_id}`),
+  },
+
+  // ─── Collaborators ───
+  {
+    name: "list_collaborators",
+    description: "List all collaborators on a writing piece.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        work_id: { type: "string", description: "UUID of the writing work" },
+      },
+      required: ["work_id"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/writing/${args.work_id}/collaborators`),
+  },
+  {
+    name: "invite_collaborator",
+    description:
+      "Invite a user as collaborator on your writing piece. Author only. Max 5. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        work_id: { type: "string", description: "UUID of the writing work" },
+        alias: {
+          type: "string",
+          description: "Username (alias) of the user to invite",
+        },
+        role: {
+          type: "string",
+          enum: ["coauthor", "editor"],
+          description: "Role: coauthor (can edit) or editor (can suggest)",
+        },
+      },
+      required: ["work_id", "alias"],
+    },
+    handler: (args) =>
+      postAPI(`/api/writing/${args.work_id}/collaborators`, {
+        alias: args.alias,
+        role: args.role || "coauthor",
+      }),
+  },
+  {
+    name: "accept_collaboration",
+    description:
+      "Accept a collaboration invitation on a writing piece. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        work_id: { type: "string", description: "UUID of the writing work" },
+      },
+      required: ["work_id"],
+    },
+    handler: (args) =>
+      postAPI(`/api/writing/${args.work_id}/collaborators/accept`),
+  },
+  {
+    name: "remove_collaborator",
+    description:
+      "Remove a collaborator from a writing piece. Author or self can remove. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        collaborator_id: {
+          type: "string",
+          description: "UUID of the collaborator record",
+        },
+      },
+      required: ["collaborator_id"],
+    },
+    handler: (args) =>
+      deleteAPI(`/api/writing/collaborators/${args.collaborator_id}`),
+  },
+
+  // ─── Workshop Tools ───
+
+  {
+    name: "list_workshops",
+    description: "List writing workshops for a group.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        group_id: { type: "string", description: "UUID of the group" },
+      },
+      required: ["group_id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.group_id}/workshops`),
+  },
+  {
+    name: "create_workshop",
+    description: "Submit a work for group critique in a writing workshop.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        group_id: { type: "string", description: "UUID of the group" },
+        work_id: { type: "string", description: "UUID of the work to submit" },
+        title: { type: "string", description: "Workshop title" },
+        description: {
+          type: "string",
+          description: "What feedback you are looking for (optional)",
+        },
+      },
+      required: ["group_id", "work_id", "title"],
+    },
+    handler: (args) =>
+      postAPI(`/api/groups/${args.group_id}/workshops`, {
+        work_id: args.work_id,
+        title: args.title,
+        description: args.description || "",
+      }),
+  },
+  {
+    name: "get_workshop",
+    description: "Get workshop details including reviews.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        workshop_id: { type: "string", description: "UUID of the workshop" },
+      },
+      required: ["workshop_id"],
+    },
+    handler: (args) => fetchAPI(`/api/workshops/${args.workshop_id}`),
+  },
+  {
+    name: "submit_workshop_review",
+    description:
+      "Submit a structured review for a workshop. Includes overall feedback and optional ratings.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        workshop_id: { type: "string", description: "UUID of the workshop" },
+        overall: {
+          type: "string",
+          description: "Overall feedback text (required)",
+        },
+        clarity: {
+          type: "integer",
+          description: "Clarity rating 1-5 (optional)",
+        },
+        pacing: {
+          type: "integer",
+          description: "Pacing rating 1-5 (optional)",
+        },
+        voice: {
+          type: "integer",
+          description: "Voice rating 1-5 (optional)",
+        },
+        engagement: {
+          type: "integer",
+          description: "Engagement rating 1-5 (optional)",
+        },
+      },
+      required: ["workshop_id", "overall"],
+    },
+    handler: (args) => {
+      const body = { overall: args.overall };
+      if (args.clarity) body.clarity = args.clarity;
+      if (args.pacing) body.pacing = args.pacing;
+      if (args.voice) body.voice = args.voice;
+      if (args.engagement) body.engagement = args.engagement;
+      return postAPI(`/api/workshops/${args.workshop_id}/reviews`, body);
+    },
+  },
+
+  // ─── AI Writing Tools ───
+
+  {
+    name: "ai_writing_feedback",
+    description:
+      "Get AI-generated constructive feedback on a work's clarity, pacing, voice, and engagement. Only works on your own writing.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        work_id: { type: "string", description: "UUID of the work" },
+      },
+      required: ["work_id"],
+    },
+    handler: (args) => postAPI(`/api/writing/${args.work_id}/ai-feedback`, {}),
+  },
+  {
+    name: "ai_title_summary_suggest",
+    description:
+      "Get AI-suggested titles and summaries for a work. Only works on your own writing.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        work_id: { type: "string", description: "UUID of the work" },
+      },
+      required: ["work_id"],
+    },
+    handler: (args) => postAPI(`/api/writing/${args.work_id}/ai-suggest`, {}),
+  },
 ];
+
+// ─── Admin / Debug Tools (require CIVNODE_SESSION_TOKEN with admin role) ───
+
+if (sessionToken) {
+  tools.push(
+    {
+      name: "admin_health",
+      description: "Check system health: app status, migration version, DB/Redis connectivity, bot status.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/health"),
+    },
+    {
+      name: "admin_stats",
+      description: "System-wide statistics: user counts, works, monuments, forums, moderation queue, encounters, and more.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/admin/stats"),
+    },
+    {
+      name: "admin_ai_providers",
+      description: "List configured AI text providers (BYOK). Shows provider names, base URLs, models, and which is default. API keys are redacted server-side.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/settings/ai-providers"),
+    },
+    {
+      name: "admin_ai_provider_keys",
+      description: "List AI text providers with partial API keys visible (last 4 chars). Use to verify keys are set correctly.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/settings/ai-providers/keys"),
+    },
+    {
+      name: "admin_image_providers",
+      description: "List configured image generation providers. Shows names, base URLs, models, and default.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/settings/image-providers"),
+    },
+    {
+      name: "admin_embedding_providers",
+      description: "List configured embedding providers (for semantic search). Shows names, base URLs, models, dimensions, and default. IMPORTANT: embedding providers must NOT be used for chat/text generation — they are a separate system.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/settings/embedding-providers"),
+    },
+    {
+      name: "admin_ai_usage",
+      description: "Show AI token usage statistics: total tokens, costs, per-model breakdown.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/settings/ai-usage"),
+    },
+    {
+      name: "admin_test_ai_chat",
+      description: "Send a test prompt through the AI chat pipeline to verify the text provider works. Uses the default configured AI provider (cloud BYOK). Returns the raw AI response.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          prompt: { type: "string", description: "Test prompt to send (default: 'Say hello in one sentence.')" },
+          system: { type: "string", description: "Optional system prompt" },
+        },
+      },
+      handler: (args) => postAPI("/api/ai/chat", {
+        messages: [
+          ...(args.system ? [{ role: "system", content: args.system }] : []),
+          { role: "user", content: args.prompt || "Say hello in one sentence." },
+        ],
+      }),
+    },
+    {
+      name: "admin_test_embedding",
+      description: "Test the embedding provider by generating an embedding for a short text. Verifies the embedding pipeline works end-to-end.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          text: { type: "string", description: "Text to embed (default: 'test')" },
+        },
+      },
+      handler: async (args) => {
+        const res = await fetch(`${API_BASE}/api/ai/test-embedding`, {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({ text: args.text || "test" }),
+        });
+        return handleResponse(res);
+      },
+    },
+    {
+      name: "admin_users",
+      description: "List all users with details: alias, role, status, ban state, patron status, monument, creation date.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          page: { type: "number", description: "Page number (default: 1)" },
+        },
+      },
+      handler: (args) => fetchAPI(`/api/admin/users${args.page ? '?page=' + args.page : ''}`),
+    },
+    {
+      name: "admin_user_ban",
+      description: "Ban a user by ID. Prevents login and hides their content.",
+      inputSchema: {
+        type: "object",
+        properties: { user_id: { type: "string", description: "User UUID" } },
+        required: ["user_id"],
+      },
+      handler: (args) => postAPI(`/api/admin/users/${args.user_id}/ban`),
+    },
+    {
+      name: "admin_user_unban",
+      description: "Unban a previously banned user.",
+      inputSchema: {
+        type: "object",
+        properties: { user_id: { type: "string", description: "User UUID" } },
+        required: ["user_id"],
+      },
+      handler: (args) => postAPI(`/api/admin/users/${args.user_id}/unban`),
+    },
+    {
+      name: "admin_moderation_queue",
+      description: "View the content moderation queue: flagged monuments, works, and forum posts awaiting review.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/moderation/queue"),
+    },
+    {
+      name: "admin_backups",
+      description: "List available database backups with timestamps and sizes.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/admin/backups"),
+    },
+    {
+      name: "admin_trigger_backup",
+      description: "Trigger an immediate database backup.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => postAPI("/api/admin/backups"),
+    },
+    {
+      name: "admin_feedback",
+      description: "List user feedback and bug reports.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/admin/feedback"),
+    },
+    {
+      name: "admin_site_settings",
+      description: "View current site-wide settings: registration open/closed, maintenance mode, feature flags.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/admin/site-settings"),
+    },
+    {
+      name: "admin_update_site_settings",
+      description: "Update site-wide settings. Pass only the fields you want to change.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          registration_open: { type: "boolean", description: "Allow new registrations" },
+          maintenance_mode: { type: "boolean", description: "Enable maintenance mode" },
+        },
+      },
+      handler: (args) => putAPI("/api/admin/site-settings", args),
+    },
+    {
+      name: "admin_research_stats",
+      description: "Research system statistics: total items, embeddings, folders, per-user breakdown.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/admin/research-stats"),
+    },
+    {
+      name: "admin_botsim_state",
+      description: "Get bot simulation state: active bots, last tick, simulation status.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/admin/botsim/state"),
+    },
+    {
+      name: "admin_botsim_bots",
+      description: "List all simulated bots with their personas, activity stats, and status.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/admin/botsim/bots"),
+    },
+    {
+      name: "admin_botsim_tick",
+      description: "Trigger one simulation tick: bots perform random actions (write, post, react).",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => postAPI("/api/admin/botsim/tick"),
+    },
+    {
+      name: "admin_images",
+      description: "List AI-generated images across the platform with moderation status.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          page: { type: "number", description: "Page number" },
+          status: { type: "string", description: "Filter: 'pending', 'approved', 'blocked'" },
+        },
+      },
+      handler: (args) => {
+        const params = new URLSearchParams();
+        if (args.page) params.set("page", args.page);
+        if (args.status) params.set("status", args.status);
+        const qs = params.toString();
+        return fetchAPI(`/api/admin/images${qs ? '?' + qs : ''}`);
+      },
+    },
+    {
+      name: "admin_block_image",
+      description: "Block an AI-generated image (hides it from public view).",
+      inputSchema: {
+        type: "object",
+        properties: {
+          entity_type: { type: "string", description: "Entity type: 'character', 'creature', 'location', 'plot'" },
+          entity_id: { type: "string", description: "Entity UUID" },
+        },
+        required: ["entity_type", "entity_id"],
+      },
+      handler: (args) => postAPI(`/api/admin/images/${args.entity_type}/${args.entity_id}/block`),
+    },
+    {
+      name: "admin_campaigns",
+      description: "List marketing campaigns.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/admin/campaigns"),
+    },
+    {
+      name: "admin_ornaments",
+      description: "List all monument ornaments (visual decorations granted to users).",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/admin/ornaments"),
+    },
+    {
+      name: "admin_test_ollama",
+      description: "Test local Ollama connectivity from the SERVER side. Sends a simple chat request to the Ollama instance configured in the embedding provider's base URL (minus /v1). Use to verify Ollama is reachable from Docker.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          url: { type: "string", description: "Ollama base URL (default: http://host.docker.internal:11434)" },
+          model: { type: "string", description: "Model to test (default: qwen3:8b)" },
+          prompt: { type: "string", description: "Test prompt (default: 'Say hi in 5 words')" },
+        },
+      },
+      handler: async (args) => {
+        const url = args.url || "http://host.docker.internal:11434";
+        const model = args.model || "qwen3:8b";
+        const prompt = args.prompt || "Say hi in 5 words";
+        try {
+          const res = await fetch(`${url}/v1/chat/completions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model,
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0.7,
+            }),
+            signal: AbortSignal.timeout(30000),
+          });
+          if (!res.ok) {
+            const body = await res.text().catch(() => "");
+            return { ok: false, status: res.status, error: body || res.statusText, url, model };
+          }
+          const data = await res.json();
+          return {
+            ok: true,
+            model,
+            url,
+            response: data.choices?.[0]?.message?.content || "(empty)",
+            usage: data.usage || null,
+          };
+        } catch (err) {
+          return { ok: false, url, model, error: err.message };
+        }
+      },
+    },
+  );
+}
 
 // ─── Register Handlers ───
 
