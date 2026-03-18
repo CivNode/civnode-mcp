@@ -124,7 +124,7 @@ async function handleResponse(res) {
 // ─── Server ───
 
 const server = new Server(
-  { name: "civnode", version: "2.0.0" },
+  { name: "civnode", version: "2.0.1" },
   { capabilities: { tools: {} } }
 );
 
