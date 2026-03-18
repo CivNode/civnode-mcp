@@ -2,14 +2,18 @@
 /**
  * CivNode MCP Server
  *
- * A Model Context Protocol server that gives AI assistants access to
- * CivNode — a social platform where every human gets exactly one page
- * (Monument) displayed at random. No algorithm, no likes, no followers.
+ * The most advanced AI-powered creative writing platform, now accessible
+ * to any AI assistant via MCP. Write novels, build richly detailed worlds,
+ * develop characters with AI-generated profiles and portraits, collaborate
+ * in real time, and publish to a community built on different principles —
+ * no algorithm, no likes, no followers.
  *
- * 52 tools covering monuments, creative writing, forums, anonymous
- * letters, direct messaging, encounters, groups, competitions,
- * notifications, bookmarks, supporter subscriptions, writing comments,
- * draft sharing, collaborators, workshops, and AI writing tools.
+ * 56 tools covering:
+ * - Creative writing: publish works, get AI feedback, title/summary suggestions
+ * - World-building: characters, locations, creatures, plots, family trees
+ * - Community: monuments, forums, anonymous letters, encounters, competitions
+ * - Collaboration: real-time co-writing, draft sharing, workshops
+ * - Platform: messaging, groups, notifications, bookmarks, subscriptions
  *
  * Usage:
  *   npx civnode-mcp
@@ -29,6 +33,8 @@
  *
  * Public tools work without authentication. For authenticated operations
  * (publishing, messaging, subscription management), provide a session token.
+ * Admin tools are gated behind the session token — they only appear when
+ * a token is configured and require server-side admin role.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
