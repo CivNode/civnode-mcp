@@ -34,7 +34,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/christerso/civnode-mcp.git"
+    "url": "git+https://github.com/CivNode/civnode-mcp.git"
   },
   "homepage": "https://civnode.com",
   "dependencies": {
