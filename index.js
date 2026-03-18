@@ -20,14 +20,14 @@
  * - Admin: system health, user management, moderation, bot simulation
  *
  * Usage:
- *   npx civnode-mcp
+ *   npx @civnode/mcp
  *
  * Claude Desktop config (~/.config/claude/claude_desktop_config.json):
  *   {
  *     "mcpServers": {
  *       "civnode": {
  *         "command": "npx",
- *         "args": ["-y", "civnode-mcp"],
+ *         "args": ["-y", "@civnode/mcp"],
  *         "env": {
  *           "CIVNODE_SESSION_TOKEN": "your-session-token"
  *         }

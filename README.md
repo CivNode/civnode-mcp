@@ -7,7 +7,7 @@ MCP server for [CivNode](https://civnode.com) — the AI-powered creative writin
 ## Quick Start
 
 ```bash
-npx civnode-mcp
+npx @civnode/mcp
 ```
 
 No installation required. The server runs via `npx` and communicates over stdio using the [Model Context Protocol](https://modelcontextprotocol.io/).
@@ -23,7 +23,7 @@ Add to `~/.config/claude/claude_desktop_config.json`:
   "mcpServers": {
     "civnode": {
       "command": "npx",
-      "args": ["-y", "civnode-mcp"],
+      "args": ["-y", "@civnode/mcp"],
       "env": {
         "CIVNODE_SESSION_TOKEN": "your-session-token"
       }
@@ -41,7 +41,7 @@ Add to `.claude/settings.json` or `~/.claude/settings.json`:
   "mcpServers": {
     "civnode": {
       "command": "npx",
-      "args": ["-y", "civnode-mcp"],
+      "args": ["-y", "@civnode/mcp"],
       "env": {
         "CIVNODE_SESSION_TOKEN": "your-session-token"
       }
@@ -393,7 +393,7 @@ Admin tools require a session token with admin role. They only appear when a tok
 To run against a local CivNode instance:
 
 ```bash
-CIVNODE_API_URL=http://localhost:9080 CIVNODE_SESSION_TOKEN=your-token npx civnode-mcp
+CIVNODE_API_URL=http://localhost:9080 CIVNODE_SESSION_TOKEN=your-token npx @civnode/mcp
 ```
 
 Or in your MCP client config:
@@ -403,7 +403,7 @@ Or in your MCP client config:
   "mcpServers": {
     "civnode-local": {
       "command": "npx",
-      "args": ["-y", "civnode-mcp"],
+      "args": ["-y", "@civnode/mcp"],
       "env": {
         "CIVNODE_API_URL": "http://localhost:9080",
         "CIVNODE_SESSION_TOKEN": "your-local-token"

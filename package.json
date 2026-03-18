@@ -1,5 +1,5 @@
 {
-  "name": "civnode-mcp",
+  "name": "@civnode/mcp",
   "version": "2.0.0",
   "description": "MCP server for CivNode — the most advanced AI-powered creative writing platform. 189 tools for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, forums, competitions, collaboration, and more.",
   "type": "module",
@@ -10,7 +10,7 @@
   "files": [
     "index.js"
   ],
-  "mcpName": "io.github.christerso/civnode",
+  "mcpName": "io.github.civnode/mcp",
   "keywords": [
     "mcp",
     "model-context-protocol",
@@ -30,7 +30,7 @@
     "forum",
     "competitions"
   ],
-  "author": "christerso",
+  "author": "civnode",
   "license": "MIT",
   "repository": {
     "type": "git",
