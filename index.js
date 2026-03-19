@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 189 tools covering:
+ * 191 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -3175,6 +3175,18 @@ if (sessionToken) {
       description: "List all monument ornaments (visual decorations granted to users).",
       inputSchema: { type: "object", properties: {} },
       handler: () => fetchAPI("/api/admin/ornaments"),
+    },
+    {
+      name: "admin_captcha_stats",
+      description: "Get captcha analytics — challenges, solve rates, country breakdown, and daily trends for the last 30 days.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/admin/captcha/stats"),
+    },
+    {
+      name: "admin_captcha_recent_failures",
+      description: "Get recent captcha failures — last 50 failed or expired attempts with IP and country.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/admin/captcha/recent-failures"),
     },
     {
       name: "admin_test_ollama",
