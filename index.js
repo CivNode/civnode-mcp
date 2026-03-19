@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 191 tools covering:
+ * 216 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -124,7 +124,7 @@ async function handleResponse(res) {
 // ─── Server ───
 
 const server = new Server(
-  { name: "civnode", version: "2.0.1" },
+  { name: "civnode", version: "2.1.0" },
   { capabilities: { tools: {} } }
 );
 
@@ -2893,6 +2893,218 @@ const tools = [
     handler: (args) => deleteAPI(`/api/highlights/${args.id}`),
   },
 
+  // ── Passage Comments ──
+  {
+    name: "passage_comments_inbox",
+    description:
+      "Get your passage comment inbox — comments others have left on your works. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        cursor: {
+          type: "string",
+          description: "Pagination cursor (RFC3339 timestamp, optional)",
+        },
+      },
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.cursor) params.set("cursor", args.cursor);
+      const qs = params.toString();
+      return fetchAPI(`/api/passage-comments/inbox${qs ? "?" + qs : ""}`);
+    },
+  },
+  {
+    name: "passage_comments_mine",
+    description:
+      "Get passage comments you have written on other people's works. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        cursor: {
+          type: "string",
+          description: "Pagination cursor (RFC3339 timestamp, optional)",
+        },
+      },
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.cursor) params.set("cursor", args.cursor);
+      const qs = params.toString();
+      return fetchAPI(`/api/passage-comments/mine${qs ? "?" + qs : ""}`);
+    },
+  },
+  {
+    name: "passage_comments_create",
+    description:
+      "Create a passage comment on a work or monument. Anchor a specific text selection for contextual feedback. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content_type: {
+          type: "string",
+          enum: ["work", "monument"],
+          description: "Type of content to comment on (required)",
+        },
+        content_id: {
+          type: "string",
+          description: "UUID of the work or monument (required)",
+        },
+        body: {
+          type: "string",
+          description: "Comment text (required)",
+        },
+        anchor_start: {
+          type: "integer",
+          description: "Start offset of the selected text passage (optional)",
+        },
+        anchor_end: {
+          type: "integer",
+          description: "End offset of the selected text passage (optional)",
+        },
+        anchor_text: {
+          type: "string",
+          description: "The selected text being commented on (optional)",
+        },
+      },
+      required: ["content_type", "content_id", "body"],
+    },
+    handler: (args) =>
+      postAPI("/api/passage-comments", {
+        content_type: args.content_type,
+        content_id: args.content_id,
+        body: args.body,
+        anchor_start: args.anchor_start ?? null,
+        anchor_end: args.anchor_end ?? null,
+        anchor_text: args.anchor_text || null,
+      }),
+  },
+  {
+    name: "passage_comments_list",
+    description:
+      "List passage comments for a specific work or monument. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content_type: {
+          type: "string",
+          enum: ["work", "monument"],
+          description: "Type of content (required)",
+        },
+        content_id: {
+          type: "string",
+          description: "UUID of the work or monument (required)",
+        },
+      },
+      required: ["content_type", "content_id"],
+    },
+    handler: (args) =>
+      fetchAPI(
+        `/api/passage-comments?content_type=${encodeURIComponent(args.content_type)}&content_id=${encodeURIComponent(args.content_id)}`
+      ),
+  },
+  {
+    name: "passage_comments_reply",
+    description:
+      "Reply to a passage comment. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "UUID of the passage comment to reply to (required)",
+        },
+        body: {
+          type: "string",
+          description: "Reply text (required)",
+        },
+      },
+      required: ["id", "body"],
+    },
+    handler: (args) =>
+      postAPI(`/api/passage-comments/${args.id}/reply`, { body: args.body }),
+  },
+  {
+    name: "passage_comments_delete",
+    description:
+      "Delete a passage comment. Only the author or content owner can delete. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "UUID of the passage comment (required)",
+        },
+      },
+      required: ["id"],
+    },
+    handler: (args) => deleteAPI(`/api/passage-comments/${args.id}`),
+  },
+  {
+    name: "passage_comments_resonate",
+    description:
+      "Leave quiet appreciation on a passage comment. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "UUID of the passage comment (required)",
+        },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/passage-comments/${args.id}/resonate`),
+  },
+  {
+    name: "passage_comments_escalate",
+    description:
+      "Escalate a passage comment for moderation review. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "UUID of the passage comment (required)",
+        },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/passage-comments/${args.id}/escalate`),
+  },
+  {
+    name: "passage_comments_mark_read",
+    description:
+      "Mark a passage comment as read. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "UUID of the passage comment (required)",
+        },
+      },
+      required: ["id"],
+    },
+    handler: (args) => putAPI(`/api/passage-comments/${args.id}/read`),
+  },
+  {
+    name: "passage_comments_dismiss",
+    description:
+      "Dismiss a passage comment from your inbox. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "UUID of the passage comment (required)",
+        },
+      },
+      required: ["id"],
+    },
+    handler: (args) => putAPI(`/api/passage-comments/${args.id}/dismiss`),
+  },
+
   // ── Users (Extended) ──
   {
     name: "search_users",
@@ -3230,6 +3442,210 @@ if (sessionToken) {
           return { ok: false, url, model, error: err.message };
         }
       },
+    },
+    {
+      name: "admin_toggle_strategist",
+      description: "Toggle strategist role for a user. Strategists have access to the Civic Room. Admin only.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          user_id: { type: "string", description: "User UUID (required)" },
+        },
+        required: ["user_id"],
+      },
+      handler: (args) => postAPI(`/api/admin/users/${args.user_id}/toggle-strategist`),
+    },
+
+    // ── Civic Room (Admin / Strategist) ──
+    {
+      name: "civic_room_get_notes",
+      description: "Get your private Civic Room notes. Requires strategist or admin role.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/civic-room/notes"),
+    },
+    {
+      name: "civic_room_save_notes",
+      description: "Save your private Civic Room notes. Requires strategist or admin role.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          body: { type: "string", description: "Notes content (required)" },
+        },
+        required: ["body"],
+      },
+      handler: (args) => putAPI("/api/civic-room/notes", { body: args.body }),
+    },
+    {
+      name: "civic_room_overview",
+      description: "Get Civic Room overview: recent social posts, threads, canvases. Requires strategist or admin role.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/civic-room/overview"),
+    },
+    {
+      name: "civic_room_threads",
+      description: "List civic threads (forum threads with civic visibility). Requires strategist or admin role.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/civic-room/threads"),
+    },
+    {
+      name: "civic_room_canvases",
+      description: "List civic canvases. Requires strategist or admin role.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/civic-room/canvases"),
+    },
+    {
+      name: "civic_room_list_channels",
+      description: "List social media channels configured for cross-posting. Requires strategist or admin role.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/civic-room/channels"),
+    },
+    {
+      name: "civic_room_create_channel",
+      description: "Create a social media channel for cross-posting. Requires strategist or admin role.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          platform: { type: "string", description: "Platform name, e.g. twitter, bluesky, mastodon (required)" },
+          handle: { type: "string", description: "Account handle on the platform (required)" },
+          display_name: { type: "string", description: "Display name for the channel" },
+          access_token: { type: "string", description: "OAuth access token" },
+          refresh_token: { type: "string", description: "OAuth refresh token" },
+        },
+        required: ["platform", "handle"],
+      },
+      handler: (args) => {
+        const body = {
+          platform: args.platform,
+          handle: args.handle,
+        };
+        if (args.display_name) body.display_name = args.display_name;
+        if (args.access_token) body.access_token = args.access_token;
+        if (args.refresh_token) body.refresh_token = args.refresh_token;
+        return postAPI("/api/civic-room/channels", body);
+      },
+    },
+    {
+      name: "civic_room_update_channel",
+      description: "Update a social media channel. Pass only fields to change. Requires strategist or admin role.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Channel UUID (required)" },
+          platform: { type: "string", description: "Platform name" },
+          handle: { type: "string", description: "Account handle" },
+          display_name: { type: "string", description: "Display name" },
+          access_token: { type: "string", description: "OAuth access token" },
+          refresh_token: { type: "string", description: "OAuth refresh token" },
+          disabled: { type: "boolean", description: "Whether the channel is disabled" },
+        },
+        required: ["id"],
+      },
+      handler: (args) => {
+        const { id, ...fields } = args;
+        return putAPI(`/api/civic-room/channels/${id}`, fields);
+      },
+    },
+    {
+      name: "civic_room_delete_channel",
+      description: "Delete a social media channel. Requires strategist or admin role.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Channel UUID (required)" },
+        },
+        required: ["id"],
+      },
+      handler: (args) => deleteAPI(`/api/civic-room/channels/${args.id}`),
+    },
+    {
+      name: "civic_room_list_posts",
+      description: "List social media posts. Filter by state and channel. Requires strategist or admin role.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          state: { type: "string", description: "Filter by state: draft, queued, published, failed" },
+          channel_id: { type: "string", description: "Filter by channel UUID" },
+        },
+      },
+      handler: (args) => {
+        const params = new URLSearchParams();
+        if (args.state) params.set("state", args.state);
+        if (args.channel_id) params.set("channel_id", args.channel_id);
+        const qs = params.toString();
+        return fetchAPI(`/api/civic-room/posts${qs ? "?" + qs : ""}`);
+      },
+    },
+    {
+      name: "civic_room_create_post",
+      description: "Create a social media post. Can target multiple channels. Requires strategist or admin role.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          channel_ids: {
+            type: "array",
+            items: { type: "string" },
+            description: "Channel UUIDs to post to (required)",
+          },
+          body: { type: "string", description: "Post content (required)" },
+          state: { type: "string", description: "Initial state: draft or queued (default: draft)" },
+          scheduled_at: { type: "string", description: "Schedule time in RFC3339 format (optional)" },
+          repeat_days: { type: "integer", description: "Repeat every N days (optional)" },
+        },
+        required: ["channel_ids", "body"],
+      },
+      handler: (args) => {
+        const body = {
+          channel_ids: args.channel_ids,
+          body: args.body,
+          state: args.state || "draft",
+        };
+        if (args.scheduled_at) body.scheduled_at = args.scheduled_at;
+        if (args.repeat_days) body.repeat_days = args.repeat_days;
+        return postAPI("/api/civic-room/posts", body);
+      },
+    },
+    {
+      name: "civic_room_update_post",
+      description: "Update a social media post (draft or queued only). Pass only fields to change. Requires strategist or admin role.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Post UUID (required)" },
+          body: { type: "string", description: "Post content" },
+          state: { type: "string", description: "State: draft or queued" },
+          scheduled_at: { type: "string", description: "Schedule time in RFC3339 format" },
+          repeat_days: { type: "integer", description: "Repeat every N days" },
+        },
+        required: ["id"],
+      },
+      handler: (args) => {
+        const { id, ...fields } = args;
+        return putAPI(`/api/civic-room/posts/${id}`, fields);
+      },
+    },
+    {
+      name: "civic_room_delete_post",
+      description: "Delete a social media post (draft or queued only). Requires strategist or admin role.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Post UUID (required)" },
+        },
+        required: ["id"],
+      },
+      handler: (args) => deleteAPI(`/api/civic-room/posts/${args.id}`),
+    },
+    {
+      name: "civic_room_publish_post",
+      description: "Publish a social media post immediately to its platform. Requires strategist or admin role.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Post UUID (required)" },
+        },
+        required: ["id"],
+      },
+      handler: (args) => postAPI(`/api/civic-room/posts/${args.id}/publish`),
     },
   );
 }

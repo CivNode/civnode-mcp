@@ -2,7 +2,7 @@
 
 MCP server for [CivNode](https://civnode.com) — the AI-powered creative writing platform where every human gets exactly one page (a Monument) displayed at random. No algorithm, no likes, no followers.
 
-**189 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, forums, competitions, collaboration, and platform administration.
+**216 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, forums, competitions, collaboration, passage comments, civic room, and platform administration.
 
 ## Quick Start
 
@@ -239,6 +239,23 @@ Collaborative drawing and brainstorming boards within groups.
 | `update_canvas` | Yes | Update canvas name. |
 | `delete_canvas` | Yes | Delete a canvas permanently. |
 
+### Passage Comments
+
+Contextual feedback anchored to specific text passages in works and monuments.
+
+| Tool | Auth | Description |
+|------|------|-------------|
+| `passage_comments_inbox` | Yes | Get passage comments others left on your works. |
+| `passage_comments_mine` | Yes | Get passage comments you wrote on other works. |
+| `passage_comments_create` | Yes | Create a passage comment anchored to a text selection. |
+| `passage_comments_list` | Yes | List passage comments for a specific work or monument. |
+| `passage_comments_reply` | Yes | Reply to a passage comment. |
+| `passage_comments_delete` | Yes | Delete a passage comment. |
+| `passage_comments_resonate` | Yes | Leave quiet appreciation on a passage comment. |
+| `passage_comments_escalate` | Yes | Escalate a passage comment for moderation review. |
+| `passage_comments_mark_read` | Yes | Mark a passage comment as read. |
+| `passage_comments_dismiss` | Yes | Dismiss a passage comment from your inbox. |
+
 ### Research & Observatory
 
 Semantic search, chapter analysis, writing insights, and AI-powered questions about your work.
@@ -363,6 +380,7 @@ Admin tools require a session token with admin role. They only appear when a tok
 | `admin_users` | List all users with details and status. |
 | `admin_user_ban` | Ban a user. |
 | `admin_user_unban` | Unban a user. |
+| `admin_toggle_strategist` | Toggle strategist role for a user (grants Civic Room access). |
 | `admin_moderation_queue` | View flagged content awaiting review. |
 | `admin_ai_providers` | List configured AI text providers. |
 | `admin_ai_provider_keys` | List AI providers with partial API keys visible. |
@@ -385,6 +403,29 @@ Admin tools require a session token with admin role. They only appear when a tok
 | `admin_block_image` | Block an AI-generated image. |
 | `admin_campaigns` | List marketing campaigns. |
 | `admin_ornaments` | List monument ornaments. |
+| `admin_captcha_stats` | Captcha analytics: challenges, solve rates, country breakdown. |
+| `admin_captcha_recent_failures` | Recent captcha failures with IP and country. |
+
+### Civic Room (Admin / Strategist)
+
+The Civic Room is a private workspace for platform strategists and admins to manage social media presence and coordinate.
+
+| Tool | Description |
+|------|-------------|
+| `civic_room_get_notes` | Get your private Civic Room notes. |
+| `civic_room_save_notes` | Save your private Civic Room notes. |
+| `civic_room_overview` | Get overview: recent posts, threads, canvases. |
+| `civic_room_threads` | List civic threads. |
+| `civic_room_canvases` | List civic canvases. |
+| `civic_room_list_channels` | List social media channels. |
+| `civic_room_create_channel` | Create a social media channel. |
+| `civic_room_update_channel` | Update a social media channel. |
+| `civic_room_delete_channel` | Delete a social media channel. |
+| `civic_room_list_posts` | List social media posts. Filter by state and channel. |
+| `civic_room_create_post` | Create a social media post targeting multiple channels. |
+| `civic_room_update_post` | Update a draft/queued post. |
+| `civic_room_delete_post` | Delete a draft/queued post. |
+| `civic_room_publish_post` | Publish a post immediately to its platform. |
 
 ---
 
