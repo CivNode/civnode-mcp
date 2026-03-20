@@ -3317,6 +3317,12 @@ if (sessionToken) {
         properties: {
           registration_open: { type: "boolean", description: "Allow new registrations" },
           maintenance_mode: { type: "boolean", description: "Enable maintenance mode" },
+          side_panel_enabled: { type: "boolean", description: "Enable frontpage side panel" },
+          side_panel_title: { type: "string", description: "Side panel title heading" },
+          side_panel_body: { type: "string", description: "Side panel body text (markdown)" },
+          side_panel_cta_label: { type: "string", description: "Side panel CTA button label (empty = no button)" },
+          side_panel_cta_url: { type: "string", description: "Side panel CTA button URL" },
+          side_panel_audience: { type: "string", enum: ["visitors", "members", "everyone"], description: "Who sees the side panel" },
         },
       },
       handler: (args) => putAPI("/api/admin/site-settings", args),
