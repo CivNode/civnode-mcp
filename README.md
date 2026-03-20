@@ -2,7 +2,7 @@
 
 MCP server for [CivNode](https://civnode.com) — the AI-powered creative writing platform where every human gets exactly one page (a Monument) displayed at random. No algorithm, no likes, no followers.
 
-**216 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, forums, competitions, collaboration, passage comments, civic room, and platform administration.
+**217 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, forums, competitions, collaboration, passage comments, civic room, and platform administration.
 
 ## Quick Start
 
@@ -224,7 +224,8 @@ Full book management — create books with chapters, link compendium entities, e
 | `reorder_chapters` | Yes | Reorder chapters (pass chapter IDs in desired order). |
 | `book_link_entity` | Yes | Link a compendium entity to a book (characters, creatures, locations, plots, trees). |
 | `book_unlink_entity` | Yes | Remove a linked entity from a book. |
-| `export_book` | Yes | Export a book's content. |
+| `export_book` | Yes | Export a book's content in various formats (json, markdown, html, epub, pdf, fdx, fountain). |
+| `import_fountain` | Yes | Import a Fountain screenplay as a new book. |
 | `get_public_book` | No | Get a published book's public info. |
 
 ### Canvases
@@ -438,6 +439,32 @@ create_book({
   title: "The Last Lighthouse",
   book_type: "screenplay",
   screenplay_format: "feature_film"
+})
+```
+
+### Export a Screenplay as Final Draft (FDX)
+
+```javascript
+export_book({
+  id: "book-uuid-here",
+  format: "fdx"
+})
+```
+
+### Export a Screenplay as Fountain
+
+```javascript
+export_book({
+  id: "book-uuid-here",
+  format: "fountain"
+})
+```
+
+### Import a Fountain Screenplay
+
+```javascript
+import_fountain({
+  text: "Title: The Last Lighthouse\nCredit: Written by\nAuthor: Jane Doe\n\nINT. LIGHTHOUSE - NIGHT\n\nA lone KEEPER tends the light."
 })
 ```
 

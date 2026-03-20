@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 216 tools covering:
+ * 217 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -2464,15 +2464,46 @@ const tools = [
   },
   {
     name: "export_book",
-    description: "Export a book's content. Requires authentication.",
+    description: "Export a book's content in various formats. Requires authentication.",
     inputSchema: {
       type: "object",
       properties: {
         id: { type: "string", description: "Book UUID" },
+        format: {
+          type: "string",
+          enum: ["json", "markdown", "html", "epub", "pdf", "fdx", "fountain"],
+          description: "Export format (default: json). Use fdx for Final Draft XML, fountain for Fountain screenplay format.",
+        },
       },
       required: ["id"],
     },
-    handler: (args) => fetchAPI(`/api/books/${args.id}/export`),
+    handler: (args) => {
+      const qs = args.format ? `?format=${args.format}` : "";
+      return fetchAPI(`/api/books/${args.id}/export${qs}`);
+    },
+  },
+  {
+    name: "import_fountain",
+    description: "Import a Fountain screenplay as a new book. Sends the raw Fountain text. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        text: { type: "string", description: "Fountain screenplay content" },
+      },
+      required: ["text"],
+    },
+    handler: async (args) => {
+      const headers = { "Content-Type": "text/plain" };
+      if (sessionToken) {
+        headers["Authorization"] = `Bearer ${sessionToken}`;
+      }
+      const res = await fetch(`${API_BASE}/api/books/import/fountain`, {
+        method: "POST",
+        headers,
+        body: args.text,
+      });
+      return handleResponse(res);
+    },
   },
   {
     name: "get_public_book",
