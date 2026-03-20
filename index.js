@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 222 tools covering:
+ * 228 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -246,6 +246,40 @@ const tools = [
       }
       return postAPI(`/api/writing/${args.content_id}/resonate`);
     },
+  },
+
+  // ── Monument Sharing ──
+  {
+    name: "monument_share_preview",
+    description:
+      "Get a preview of the text that will be shared when posting your Monument to social media. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/monument/share/preview"),
+  },
+  {
+    name: "monument_share",
+    description:
+      "Share your Monument to connected social media platforms (Bluesky, Mastodon). Requires authentication and at least one connected social account.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        platforms: {
+          type: "array",
+          items: { type: "string", enum: ["bluesky", "mastodon"] },
+          description: "Platforms to share to",
+        },
+        text: {
+          type: "string",
+          description: "Custom share text (optional, uses auto-generated preview if omitted)",
+        },
+      },
+      required: ["platforms"],
+    },
+    handler: (args) =>
+      postAPI("/api/monument/share", {
+        platforms: args.platforms,
+        text: args.text || "",
+      }),
   },
 
   // ── Letters ──
@@ -917,6 +951,53 @@ const tools = [
       "Cancel your supporter subscription. Cancels at the end of the current billing period. Requires authentication.",
     inputSchema: { type: "object", properties: {} },
     handler: () => postAPI("/api/stripe/cancel"),
+  },
+
+  // ─── Social Accounts ───
+  {
+    name: "list_social_accounts",
+    description:
+      "List connected social media accounts (Bluesky, Mastodon) for sharing your Monument. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/settings/social"),
+  },
+  {
+    name: "connect_bluesky",
+    description:
+      "Connect a Bluesky account for Monument sharing. Requires a Bluesky handle and app password (not your main password — create one at bsky.app/settings/app-passwords). Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        handle: {
+          type: "string",
+          description: "Bluesky handle (e.g. user.bsky.social)",
+        },
+        app_password: {
+          type: "string",
+          description: "Bluesky app password",
+        },
+      },
+      required: ["handle", "app_password"],
+    },
+    handler: (args) =>
+      postAPI("/api/settings/social/bluesky", {
+        handle: args.handle,
+        app_password: args.app_password,
+      }),
+  },
+  {
+    name: "disconnect_bluesky",
+    description:
+      "Disconnect your Bluesky account from CivNode. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => deleteAPI("/api/settings/social/bluesky"),
+  },
+  {
+    name: "disconnect_mastodon",
+    description:
+      "Disconnect your Mastodon account from CivNode. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => deleteAPI("/api/settings/social/mastodon"),
   },
 
   // ─── Writing Comments ───
