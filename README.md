@@ -2,7 +2,7 @@
 
 MCP server for [CivNode](https://civnode.com) — the AI-powered creative writing platform where every human gets exactly one page (a Monument) displayed at random. No algorithm, no likes, no followers.
 
-**217 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, forums, competitions, collaboration, passage comments, civic room, and platform administration.
+**222 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, forums, competitions, collaboration, passage comments, civic room, and platform administration.
 
 ## Quick Start
 
@@ -388,6 +388,11 @@ Admin tools require a session token with admin role. They only appear when a tok
 | `admin_image_providers` | List image generation providers. |
 | `admin_embedding_providers` | List embedding providers. |
 | `admin_ai_usage` | AI token usage statistics. |
+| `ai_usage_log` | Detailed AI usage log with filtering (date range, provider, action, local/cloud, success) and pagination. |
+| `ai_usage_export` | Export AI usage data as CSV with the same filters. |
+| `ai_pricing_list` | List AI pricing rules (per-model token and image prices). |
+| `ai_pricing_upsert` | Create or update an AI pricing rule for a provider+model. |
+| `ai_pricing_delete` | Delete an AI pricing rule by ID. |
 | `admin_test_ai_chat` | Test AI chat pipeline with a prompt. |
 | `admin_test_embedding` | Test embedding pipeline. |
 | `admin_test_ollama` | Test local Ollama connectivity from the server. |

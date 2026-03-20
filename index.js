@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 217 tools covering:
+ * 222 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -124,7 +124,7 @@ async function handleResponse(res) {
 // ─── Server ───
 
 const server = new Server(
-  { name: "civnode", version: "2.1.0" },
+  { name: "civnode", version: "2.2.0" },
   { capabilities: { tools: {} } }
 );
 
@@ -3259,6 +3259,103 @@ if (sessionToken) {
       description: "Show AI token usage statistics: total tokens, costs, per-model breakdown.",
       inputSchema: { type: "object", properties: {} },
       handler: () => fetchAPI("/api/settings/ai-usage"),
+    },
+    {
+      name: "ai_usage_log",
+      description: "Get the detailed AI usage log with filtering and pagination. Returns individual AI calls with provider, model, tokens, cost, and timing.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          page: { type: "number", description: "Page number (default: 1)" },
+          per_page: { type: "number", description: "Results per page (default: 50)" },
+          from: { type: "string", description: "Start date filter (YYYY-MM-DD)" },
+          to: { type: "string", description: "End date filter (YYYY-MM-DD)" },
+          provider: { type: "string", description: "Filter by provider name" },
+          action: { type: "string", description: "Filter by action type" },
+          local: { type: "boolean", description: "Filter by local (true) vs cloud (false)" },
+          success: { type: "boolean", description: "Filter by success status" },
+        },
+      },
+      handler: (args) => {
+        const params = new URLSearchParams();
+        if (args.page) params.set("page", args.page);
+        if (args.per_page) params.set("per_page", args.per_page);
+        if (args.from) params.set("from", args.from);
+        if (args.to) params.set("to", args.to);
+        if (args.provider) params.set("provider", args.provider);
+        if (args.action) params.set("action", args.action);
+        if (args.local !== undefined) params.set("local", args.local);
+        if (args.success !== undefined) params.set("success", args.success);
+        const qs = params.toString();
+        return fetchAPI(`/api/settings/ai-usage/log${qs ? "?" + qs : ""}`);
+      },
+    },
+    {
+      name: "ai_usage_export",
+      description: "Export AI usage data as CSV. Supports the same filters as ai_usage_log (minus pagination). Returns CSV text.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          from: { type: "string", description: "Start date filter (YYYY-MM-DD)" },
+          to: { type: "string", description: "End date filter (YYYY-MM-DD)" },
+          provider: { type: "string", description: "Filter by provider name" },
+          action: { type: "string", description: "Filter by action type" },
+          local: { type: "boolean", description: "Filter by local (true) vs cloud (false)" },
+          success: { type: "boolean", description: "Filter by success status" },
+        },
+      },
+      handler: async (args) => {
+        const params = new URLSearchParams();
+        if (args.from) params.set("from", args.from);
+        if (args.to) params.set("to", args.to);
+        if (args.provider) params.set("provider", args.provider);
+        if (args.action) params.set("action", args.action);
+        if (args.local !== undefined) params.set("local", args.local);
+        if (args.success !== undefined) params.set("success", args.success);
+        const qs = params.toString();
+        const res = await fetch(`${API_BASE}/api/settings/ai-usage/export${qs ? "?" + qs : ""}`, {
+          headers: authHeaders(),
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(`API error: ${res.status} ${res.statusText} ${text}`);
+        }
+        return { csv: await res.text() };
+      },
+    },
+    {
+      name: "ai_pricing_list",
+      description: "List AI pricing rules. Shows per-model input/output token prices and image generation prices.",
+      inputSchema: { type: "object", properties: {} },
+      handler: () => fetchAPI("/api/settings/ai-pricing"),
+    },
+    {
+      name: "ai_pricing_upsert",
+      description: "Create or update an AI pricing rule. If a rule for the provider+model combination already exists, it is updated.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          provider_name: { type: "string", description: "Provider name (required)" },
+          model: { type: "string", description: "Model name (required)" },
+          input_price_per_million: { type: "number", description: "Price per million input tokens" },
+          output_price_per_million: { type: "number", description: "Price per million output tokens" },
+          image_price_per_call: { type: "number", description: "Price per image generation call" },
+        },
+        required: ["provider_name", "model"],
+      },
+      handler: (args) => putAPI("/api/settings/ai-pricing", args),
+    },
+    {
+      name: "ai_pricing_delete",
+      description: "Delete an AI pricing rule by ID.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Pricing rule UUID (required)" },
+        },
+        required: ["id"],
+      },
+      handler: (args) => deleteAPI(`/api/settings/ai-pricing/${args.id}`),
     },
     {
       name: "admin_test_ai_chat",
