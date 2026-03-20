@@ -2253,16 +2253,20 @@ const tools = [
         title: { type: "string", description: "Book title (required)" },
         book_type: {
           type: "string",
-          description: "Type: novel, novella, short_story_collection, poetry_collection, anthology, other (required)",
+          description: "Type: novel, novella, short_story_collection, poetry_collection, anthology, screenplay, other (required)",
+        },
+        screenplay_format: {
+          type: "string",
+          description: "Required for screenplay: feature_film, tv_drama, single_cam_comedy, multi_cam_sitcom, stage_play",
         },
       },
       required: ["title", "book_type"],
     },
-    handler: (args) =>
-      postAPI("/api/books", {
-        title: args.title,
-        book_type: args.book_type,
-      }),
+    handler: (args) => {
+      const body = { title: args.title, book_type: args.book_type };
+      if (args.screenplay_format) body.screenplay_format = args.screenplay_format;
+      return postAPI("/api/books", body);
+    },
   },
   {
     name: "update_book",
@@ -2280,6 +2284,18 @@ const tools = [
         author_name: { type: "string", description: "Author display name" },
         target_word_count: { type: "integer", description: "Target word count" },
         published: { type: "boolean", description: "Whether the book is published" },
+        screenplay_format: {
+          type: "string",
+          description: "Required for screenplay: feature_film, tv_drama, single_cam_comedy, multi_cam_sitcom, stage_play",
+        },
+        screenplay_font: {
+          type: "string",
+          description: "Font: courier_prime, courier, times_new_roman, arial",
+        },
+        screenplay_title_page: {
+          type: "string",
+          description: "Title page metadata as JSON object",
+        },
       },
       required: ["id"],
     },
