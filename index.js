@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 228 tools covering:
+ * 232 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -543,6 +543,93 @@ const tools = [
     },
     handler: (args) =>
       fetchAPI(`/api/users/${encodeURIComponent(args.alias)}`),
+  },
+  {
+    name: "update_tagline",
+    description:
+      "Update your profile tagline (up to 200 characters). Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        tagline: {
+          type: "string",
+          description: "Profile tagline text (max 200 chars)",
+        },
+      },
+      required: ["tagline"],
+    },
+    handler: (args) =>
+      putAPI("/api/users/tagline", { tagline: args.tagline }),
+  },
+  {
+    name: "get_social_links",
+    description:
+      "Get a user's social links (X/Twitter, Bluesky, Mastodon, etc.). Public — no authentication required.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        alias: { type: "string", description: "User alias" },
+      },
+      required: ["alias"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/users/${encodeURIComponent(args.alias)}/social-links`),
+  },
+  {
+    name: "update_social_links",
+    description:
+      "Update your social links. Provide the full list of links — this replaces all existing links. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        links: {
+          type: "array",
+          description: "Array of social link objects",
+          items: {
+            type: "object",
+            properties: {
+              link_type: {
+                type: "string",
+                description:
+                  "Link type: twitter, bluesky, mastodon, instagram, youtube, linkedin, website, custom",
+              },
+              url: { type: "string", description: "Full URL" },
+              label: {
+                type: "string",
+                description:
+                  "Display label (optional, used for custom links)",
+              },
+              display_order: {
+                type: "integer",
+                description: "Sort order (0-based)",
+              },
+            },
+            required: ["link_type", "url"],
+          },
+        },
+      },
+      required: ["links"],
+    },
+    handler: (args) =>
+      putAPI("/api/users/social-links", { links: args.links }),
+  },
+  {
+    name: "update_avatar_source",
+    description:
+      "Set your avatar source: goavatar (procedurally generated), gravatar (email-linked), or custom (uploaded image). Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        source: {
+          type: "string",
+          enum: ["goavatar", "gravatar", "custom"],
+          description: "Avatar source type",
+        },
+      },
+      required: ["source"],
+    },
+    handler: (args) =>
+      putAPI("/api/users/avatar-source", { source: args.source }),
   },
 
   // ── Messaging ──

@@ -353,6 +353,10 @@ Real-time co-writing, draft sharing, and writing workshops.
 | Tool | Auth | Description |
 |------|------|-------------|
 | `get_profile` | No | Get a user's public profile. |
+| `update_tagline` | Yes | Update your profile tagline (max 200 chars). |
+| `get_social_links` | No | Get a user's social links. |
+| `update_social_links` | Yes | Update your social links (replaces all). |
+| `update_avatar_source` | Yes | Set avatar source (goavatar, gravatar, custom). |
 | `search_users` | No | Search users by alias or name. |
 | `search_content` | No | Search across all public content. |
 | `list_notifications` | Yes | List your notifications. |
