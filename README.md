@@ -2,7 +2,7 @@
 
 MCP server for [CivNode](https://civnode.com) — the AI-powered creative writing platform where every human gets exactly one page (a Monument) displayed at random. No algorithm, no likes, no followers.
 
-**222 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, forums, competitions, collaboration, passage comments, civic room, and platform administration.
+**234 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
 
 ## Quick Start
 
@@ -283,6 +283,15 @@ Browse and fork community-published characters, creatures, locations, plots, fam
 | `marketplace_get` | No | Get detailed view of a marketplace item. |
 | `marketplace_fork` | Yes | Fork (copy) a marketplace item into your compendium. |
 
+### Library
+
+Curated showcase books that demonstrate CivNode's world-building capabilities.
+
+| Tool | Auth | Description |
+|------|------|-------------|
+| `library_books` | No | List the 4 showcase books in the CivNode library. |
+| `library_fork_book` | Yes | Fork a library book and all its entities into your collection. |
+
 ### Forum
 
 Every user on CivNode has their own forum.
@@ -474,6 +483,20 @@ export_book({
 ```javascript
 import_fountain({
   text: "Title: The Last Lighthouse\nCredit: Written by\nAuthor: Jane Doe\n\nINT. LIGHTHOUSE - NIGHT\n\nA lone KEEPER tends the light."
+})
+```
+
+### Browse the Library
+
+```javascript
+library_books()
+```
+
+### Fork a Library Book
+
+```javascript
+library_fork_book({
+  book_id: "book-uuid-here"
 })
 ```
 

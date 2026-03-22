@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 232 tools covering:
+ * 234 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -124,7 +124,7 @@ async function handleResponse(res) {
 // ─── Server ───
 
 const server = new Server(
-  { name: "civnode", version: "2.2.0" },
+  { name: "civnode", version: "2.3.0" },
   { capabilities: { tools: {} } }
 );
 
@@ -2943,6 +2943,28 @@ const tools = [
     },
     handler: (args) =>
       postAPI(`/api/marketplace/${args.entity_type}/${args.id}/fork`),
+  },
+
+  // ── Library ──
+  {
+    name: "library_books",
+    description:
+      "List the 4 showcase books in the CivNode library. No authentication required.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/library/books"),
+  },
+  {
+    name: "library_fork_book",
+    description:
+      "Fork a library book and all its entities (characters, locations, creatures, plots) into your collection. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Library book UUID" },
+      },
+      required: ["book_id"],
+    },
+    handler: (args) => postAPI(`/api/library/books/${args.book_id}/fork`),
   },
 
   // ── Personal Letters ──
