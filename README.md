@@ -2,7 +2,7 @@
 
 MCP server for [CivNode](https://civnode.com) — the AI-powered creative writing platform where every human gets exactly one page (a Monument) displayed at random. No algorithm, no likes, no followers.
 
-**236 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
+**243 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
 
 ## Quick Start
 
@@ -226,6 +226,11 @@ Full book management — create books with chapters, link compendium entities, e
 | `book_unlink_entity` | Yes | Remove a linked entity from a book. |
 | `export_book` | Yes | Export a book's content in various formats (json, markdown, html, epub, pdf, fdx, fountain). |
 | `import_fountain` | Yes | Import a Fountain screenplay as a new book. |
+| `book_entities` | Yes | Get all entity types linked to a book in one call (characters, creatures, locations, plots, trees). |
+| `work_entities` | Yes | Get all entity types linked to a standalone work in one call. |
+| `compendium_unassigned` | Yes | Get entities not linked to any book or work. |
+| `link_work_character` | Yes | Link a character to a standalone work. |
+| `unlink_work_character` | Yes | Unlink a character from a standalone work. |
 | `get_public_book` | No | Get a published book's public info. |
 
 ### Canvases
@@ -283,6 +288,8 @@ Browse and fork community-published characters, creatures, locations, plots, fam
 | `marketplace_browse` | No | Browse marketplace by entity type (characters, creatures, locations, plots, families, books). |
 | `marketplace_get` | No | Get detailed view of a marketplace item. |
 | `marketplace_fork` | Yes | Fork (copy) a marketplace item into your compendium. |
+| `marketplace_book_showcase` | No | Get a published book's full showcase with author info and all entities. |
+| `marketplace_fork_book` | Yes | Fork a published marketplace book and all its entities into your collection. |
 
 ### Library
 

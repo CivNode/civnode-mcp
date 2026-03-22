@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 236 tools covering:
+ * 243 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -2979,6 +2979,101 @@ const tools = [
       required: ["book_id"],
     },
     handler: (args) => postAPI(`/api/library/books/${args.book_id}/fork`),
+  },
+
+  // ── Compendium Entities (bulk) ──
+  {
+    name: "book_entities",
+    description:
+      "Get all compendium entities linked to a book in one call — characters, creatures, locations, plots, and family trees. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Book UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/books/${args.id}/entities`),
+  },
+  {
+    name: "work_entities",
+    description:
+      "Get all compendium entities linked to a standalone work in one call — characters, creatures, locations, plots, and family trees. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Work UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/works/${args.id}/entities`),
+  },
+  {
+    name: "compendium_unassigned",
+    description:
+      "Get compendium entities not linked to any book or work. Useful for finding orphaned characters, creatures, locations, plots, and trees. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/compendium/unassigned"),
+  },
+  {
+    name: "marketplace_book_showcase",
+    description:
+      "Get a published book's full showcase — author info plus all published entities (characters, creatures, locations, plots, trees). No authentication required.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Book UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/marketplace/books/${args.id}/showcase`),
+  },
+  {
+    name: "marketplace_fork_book",
+    description:
+      "Fork a published marketplace book and all its entities into your collection. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Book UUID to fork" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/marketplace/books/${args.id}/fork`),
+  },
+  {
+    name: "link_work_character",
+    description:
+      "Link a character to a standalone work. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        work_id: { type: "string", description: "Work UUID" },
+        character_id: { type: "string", description: "Character UUID" },
+      },
+      required: ["work_id", "character_id"],
+    },
+    handler: (args) =>
+      postAPI(`/api/works/${args.work_id}/characters`, {
+        character_id: args.character_id,
+      }),
+  },
+  {
+    name: "unlink_work_character",
+    description:
+      "Unlink a character from a standalone work. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        work_id: { type: "string", description: "Work UUID" },
+        character_id: { type: "string", description: "Character UUID" },
+      },
+      required: ["work_id", "character_id"],
+    },
+    handler: (args) =>
+      deleteAPI(
+        `/api/works/${args.work_id}/characters/${args.character_id}`
+      ),
   },
 
   // ── Personal Letters ──
