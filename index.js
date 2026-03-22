@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 243 tools covering:
+ * 244 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -279,6 +279,32 @@ const tools = [
       postAPI("/api/monument/share", {
         platforms: args.platforms,
         text: args.text || "",
+      }),
+  },
+
+  // ── Working On ──
+  {
+    name: "user_update_working_on",
+    description:
+      'Set or clear the "currently working on" status shown on your profile. Requires authentication.',
+    inputSchema: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          description:
+            "What you are working on (max 100 chars). Send empty string or omit to clear.",
+        },
+        work_id: {
+          type: "string",
+          description: "Optional UUID of a work to link",
+        },
+      },
+    },
+    handler: (args) =>
+      putAPI("/api/users/me/working-on", {
+        text: args.text || "",
+        work_id: args.work_id || null,
       }),
   },
 

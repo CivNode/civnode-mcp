@@ -2,7 +2,7 @@
 
 MCP server for [CivNode](https://civnode.com) — the AI-powered creative writing platform where every human gets exactly one page (a Monument) displayed at random. No algorithm, no likes, no followers.
 
-**243 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
+**244 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
 
 ## Quick Start
 
@@ -82,6 +82,7 @@ Every user has exactly one Monument — their single page on the platform, displ
 | `get_monument_by_alias` | No | Read a user's Monument by their alias. |
 | `publish_monument` | Yes | Publish or update your Monument. Accepts title, body (Markdown), sources, identity mode. |
 | `resonate` | Yes | Leave quiet appreciation on a Monument or work (CivNode's alternative to likes). |
+| `user_update_working_on` | Yes | Set or clear the "currently working on" status shown on your profile (max 100 chars, optional work link). |
 
 ### Letters
 
