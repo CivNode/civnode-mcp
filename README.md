@@ -2,7 +2,7 @@
 
 MCP server for [CivNode](https://civnode.com) — the AI-powered creative writing platform where every human gets exactly one page (a Monument) displayed at random. No algorithm, no likes, no followers.
 
-**234 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
+**236 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
 
 ## Quick Start
 
@@ -272,6 +272,7 @@ Semantic search, chapter analysis, writing insights, and AI-powered questions ab
 | `observatory_moments` | Yes | Get notable moments: breakthroughs, milestones, patterns. |
 | `observatory_ask` | Yes | Ask AI about your writing patterns and story structure. |
 | `observatory_summary` | Yes | Get an AI summary of your writing journey. |
+| `book_character_evolution` | Yes | Get character evolution data for a book — emotional state, driving forces, chapter timeline, and ghost characters. |
 
 ### Marketplace
 
@@ -380,6 +381,7 @@ Real-time co-writing, draft sharing, and writing workshops.
 | `get_supporter_status` | Yes | Check supporter status. |
 | `supporter_checkout` | Yes | Start Stripe checkout for supporter ($5/month). |
 | `supporter_cancel` | Yes | Cancel supporter subscription. |
+| `ai_usage_log_local` | Yes | Log local AI usage (Ollama, ComfyUI) from the browser. |
 
 ---
 

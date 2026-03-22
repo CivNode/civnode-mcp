@@ -1,7 +1,7 @@
 {
   "name": "@civnode/mcp",
-  "version": "2.3.0",
-  "description": "MCP server for CivNode — the most advanced AI-powered creative writing platform. 234 tools for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, forums, competitions, collaboration, passage comments, civic room, library, and more.",
+  "version": "2.4.0",
+  "description": "MCP server for CivNode — the most advanced AI-powered creative writing platform. 236 tools for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, forums, competitions, collaboration, passage comments, civic room, library, and more.",
   "type": "module",
   "bin": {
     "civnode-mcp": "index.js"

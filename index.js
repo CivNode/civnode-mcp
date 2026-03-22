@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 234 tools covering:
+ * 236 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -124,7 +124,7 @@ async function handleResponse(res) {
 // ─── Server ───
 
 const server = new Server(
-  { name: "civnode", version: "2.3.0" },
+  { name: "civnode", version: "2.4.0" },
   { capabilities: { tools: {} } }
 );
 
@@ -2882,6 +2882,20 @@ const tools = [
     inputSchema: { type: "object", properties: {} },
     handler: () => fetchAPI("/api/observatory/summary"),
   },
+  {
+    name: "book_character_evolution",
+    description:
+      "Get character evolution data for a book — current emotional state, driving forces, chapter-by-chapter timeline, and ghost characters detected in text but not in compendium. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bookId: { type: "string", description: "Book UUID" },
+      },
+      required: ["bookId"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/observatory/book/${args.bookId}/evolution`),
+  },
 
   // ── Marketplace ──
   {
@@ -3401,6 +3415,41 @@ const tools = [
       if (args.limit) params.set("limit", String(args.limit));
       return fetchAPI(`/api/search?${params}`);
     },
+  },
+
+  // ── AI Usage Logging ──
+  {
+    name: "ai_usage_log_local",
+    description:
+      "Log local AI usage (Ollama, ComfyUI calls made directly from the browser to a local service). Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        provider: {
+          type: "string",
+          description: 'Local AI provider: "ollama" or "comfyui"',
+        },
+        model: {
+          type: "string",
+          description: 'Model name, e.g. "llama3:8b", "comfyui-local"',
+        },
+        action: {
+          type: "string",
+          description:
+            'What the call did, e.g. "proofread", "exploration", "chapter-analysis", "image-generate"',
+        },
+        success: {
+          type: "boolean",
+          description: "Whether the call succeeded",
+        },
+        duration_ms: {
+          type: "number",
+          description: "How long the call took in milliseconds",
+        },
+      },
+      required: ["provider", "action"],
+    },
+    handler: (args) => postAPI("/api/settings/ai-usage/log-local", args),
   },
 ];
 
