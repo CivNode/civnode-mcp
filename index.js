@@ -252,14 +252,14 @@ const tools = [
   {
     name: "monument_share_preview",
     description:
-      "Get a preview of the text that will be shared when posting your Monument to social media. Requires authentication.",
+      "Get a preview of the text that will be shared when posting your Monument to social media. Requires authentication and active supporter subscription (returns 403 for free users).",
     inputSchema: { type: "object", properties: {} },
     handler: () => fetchAPI("/api/monument/share/preview"),
   },
   {
     name: "monument_share",
     description:
-      "Share your Monument to connected social media platforms (Bluesky, Mastodon). Requires authentication and at least one connected social account.",
+      "Share your Monument to connected social media platforms (Bluesky, Mastodon). Requires authentication, active supporter subscription, and at least one connected social account.",
     inputSchema: {
       type: "object",
       properties: {
