@@ -8,14 +8,14 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 244 tools covering:
+ * 237 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
  * - Research & Observatory: semantic search, chapter analysis, writing insights
  * - Marketplace: browse, discover, and fork community creations
  * - Community: monuments, forums, letters, encounters, competitions, topics
- * - Collaboration: real-time co-writing, canvases, draft sharing, workshops
+ * - Collaboration: real-time co-writing, canvases, draft sharing
  * - Platform: messaging, groups, notifications, bookmarks, highlights, subscriptions
  * - Admin: system health, user management, moderation, bot simulation
  *
@@ -1300,96 +1300,6 @@ const tools = [
     },
     handler: (args) =>
       deleteAPI(`/api/writing/collaborators/${args.collaborator_id}`),
-  },
-
-  // ─── Workshop Tools ───
-
-  {
-    name: "list_workshops",
-    description: "List writing workshops for a group.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        group_id: { type: "string", description: "UUID of the group" },
-      },
-      required: ["group_id"],
-    },
-    handler: (args) => fetchAPI(`/api/groups/${args.group_id}/workshops`),
-  },
-  {
-    name: "create_workshop",
-    description: "Submit a work for group critique in a writing workshop.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        group_id: { type: "string", description: "UUID of the group" },
-        work_id: { type: "string", description: "UUID of the work to submit" },
-        title: { type: "string", description: "Workshop title" },
-        description: {
-          type: "string",
-          description: "What feedback you are looking for (optional)",
-        },
-      },
-      required: ["group_id", "work_id", "title"],
-    },
-    handler: (args) =>
-      postAPI(`/api/groups/${args.group_id}/workshops`, {
-        work_id: args.work_id,
-        title: args.title,
-        description: args.description || "",
-      }),
-  },
-  {
-    name: "get_workshop",
-    description: "Get workshop details including reviews.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        workshop_id: { type: "string", description: "UUID of the workshop" },
-      },
-      required: ["workshop_id"],
-    },
-    handler: (args) => fetchAPI(`/api/workshops/${args.workshop_id}`),
-  },
-  {
-    name: "submit_workshop_review",
-    description:
-      "Submit a structured review for a workshop. Includes overall feedback and optional ratings.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        workshop_id: { type: "string", description: "UUID of the workshop" },
-        overall: {
-          type: "string",
-          description: "Overall feedback text (required)",
-        },
-        clarity: {
-          type: "integer",
-          description: "Clarity rating 1-5 (optional)",
-        },
-        pacing: {
-          type: "integer",
-          description: "Pacing rating 1-5 (optional)",
-        },
-        voice: {
-          type: "integer",
-          description: "Voice rating 1-5 (optional)",
-        },
-        engagement: {
-          type: "integer",
-          description: "Engagement rating 1-5 (optional)",
-        },
-      },
-      required: ["workshop_id", "overall"],
-    },
-    handler: (args) => {
-      const body = { overall: args.overall };
-      if (args.clarity) body.clarity = args.clarity;
-      if (args.pacing) body.pacing = args.pacing;
-      if (args.voice) body.voice = args.voice;
-      if (args.engagement) body.engagement = args.engagement;
-      return postAPI(`/api/workshops/${args.workshop_id}/reviews`, body);
-    },
   },
 
   // ─── AI Writing Tools ───
@@ -3022,19 +2932,6 @@ const tools = [
     handler: (args) => fetchAPI(`/api/books/${args.id}/entities`),
   },
   {
-    name: "work_entities",
-    description:
-      "Get all compendium entities linked to a standalone work in one call — characters, creatures, locations, plots, and family trees. Requires authentication.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        id: { type: "string", description: "Work UUID" },
-      },
-      required: ["id"],
-    },
-    handler: (args) => fetchAPI(`/api/works/${args.id}/entities`),
-  },
-  {
     name: "compendium_unassigned",
     description:
       "Get compendium entities not linked to any book or work. Useful for finding orphaned characters, creatures, locations, plots, and trees. Requires authentication.",
@@ -3067,41 +2964,6 @@ const tools = [
     },
     handler: (args) => postAPI(`/api/marketplace/books/${args.id}/fork`),
   },
-  {
-    name: "link_work_character",
-    description:
-      "Link a character to a standalone work. Requires authentication.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        work_id: { type: "string", description: "Work UUID" },
-        character_id: { type: "string", description: "Character UUID" },
-      },
-      required: ["work_id", "character_id"],
-    },
-    handler: (args) =>
-      postAPI(`/api/works/${args.work_id}/characters`, {
-        character_id: args.character_id,
-      }),
-  },
-  {
-    name: "unlink_work_character",
-    description:
-      "Unlink a character from a standalone work. Requires authentication.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        work_id: { type: "string", description: "Work UUID" },
-        character_id: { type: "string", description: "Character UUID" },
-      },
-      required: ["work_id", "character_id"],
-    },
-    handler: (args) =>
-      deleteAPI(
-        `/api/works/${args.work_id}/characters/${args.character_id}`
-      ),
-  },
-
   // ── Personal Letters ──
   {
     name: "personal_letter_inbox",
