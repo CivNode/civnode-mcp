@@ -2,7 +2,7 @@
 
 MCP server for [CivNode](https://civnode.com) — the AI-powered creative writing platform where every human gets exactly one page (a Monument) displayed at random. No algorithm, no likes, no followers.
 
-**237 tools** for writing, world-building (characters, locations, creatures, plots, family trees), books, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
+**248 tools** for writing, world-building (characters, locations, creatures, plots, family trees), entity exploration, books, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
 
 ## Quick Start
 
@@ -189,6 +189,19 @@ Structured plot outlines with acts, scenes, beats, and AI generation.
 | `plot_ai_image` | Yes | Generate an AI image for the plot. |
 | `plot_publish` | Yes | Publish to the marketplace. |
 | `plot_unpublish` | Yes | Remove from the marketplace. |
+
+### Plot Designer (Book-level)
+
+Tools for the dedicated Plot Designer screen at `/books/{bookId}/plot`.
+
+| Tool | Auth | Description |
+|------|------|-------------|
+| `list_plot_templates` | No | List available plot structure templates (Three-Act, Hero's Journey, etc.). |
+| `get_book_plot` | Yes | Get the plot linked to a book with all acts, scenes, and beats. |
+| `create_book_plot_from_template` | Yes | Create a plot from a template and link to a book. |
+| `delete_book_plot` | Yes | Delete the plot linked to a book. |
+| `get_beat_suggestions` | Yes | Get story evidence suggestions for a beat (analysis, text stats, semantic). |
+| `auto_map_plot` | Yes | Batch-map story content to all empty beats using analysis + AI. |
 
 ### Family Trees
 
