@@ -135,6 +135,7 @@ Full character management with AI generation, portraits, and marketplace publish
 | `character_publish` | Yes | Publish to the marketplace. |
 | `character_unpublish` | Yes | Remove from the marketplace. |
 | `character_relationships` | Yes | Get all relationships for a character. |
+| `entity_explorer_chat_character` | Yes | Interview a character via the Entity Explorer. Chat in character, grounded in your story data. Requires BYOK AI provider. |
 
 ### Locations
 
@@ -152,6 +153,7 @@ World-building locations with areas, blueprints, and AI-powered generation.
 | `location_publish` | Yes | Publish to the marketplace. |
 | `location_unpublish` | Yes | Remove from the marketplace. |
 | `get_location_blueprint` | Yes | Get the visual blueprint/map. |
+| `entity_explorer_chat_location` | Yes | Explore a location via the Entity Explorer. Analyze ripple effects of changes. Requires BYOK AI provider. |
 
 ### Creatures
 
@@ -170,6 +172,7 @@ Creatures and fantastical beings with full AI support.
 | `creature_publish` | Yes | Publish to the marketplace. |
 | `creature_unpublish` | Yes | Remove from the marketplace. |
 | `creature_suggestions` | Yes | Get AI suggestions for a field. |
+| `entity_explorer_chat_creature` | Yes | Interview a creature via the Entity Explorer. Chat in character, grounded in your story data. Requires BYOK AI provider. |
 
 ### Plots
 
@@ -189,6 +192,7 @@ Structured plot outlines with acts, scenes, beats, and AI generation.
 | `plot_ai_image` | Yes | Generate an AI image for the plot. |
 | `plot_publish` | Yes | Publish to the marketplace. |
 | `plot_unpublish` | Yes | Remove from the marketplace. |
+| `entity_explorer_chat_plot` | Yes | Explore a plot via the Entity Explorer. Analyze branching possibilities and tension points. Requires BYOK AI provider. |
 
 ### Plot Designer (Book-level)
 

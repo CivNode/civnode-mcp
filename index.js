@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 237 tools covering:
+ * 248 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -1645,6 +1645,37 @@ const tools = [
     },
     handler: (args) => fetchAPI(`/api/characters/${args.id}/relationships`),
   },
+  {
+    name: "entity_explorer_chat_character",
+    description:
+      "Interview a character via the Entity Explorer. Chat with the character in character — the AI responds as them, grounded in your chapter content, entity details, and relationships. Requires authentication and BYOK AI provider.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Character UUID" },
+        question: { type: "string", description: "The question to ask the character" },
+        history: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              role: { type: "string", enum: ["user", "assistant"] },
+              content: { type: "string" },
+            },
+          },
+          description: "Previous conversation turns",
+        },
+        book_id: { type: "string", description: "Book UUID for semantic search context" },
+      },
+      required: ["id", "question"],
+    },
+    handler: (args) => {
+      const body = { question: args.question };
+      if (args.history) body.history = args.history;
+      if (args.book_id) body.book_id = args.book_id;
+      return postAPI(`/api/characters/${args.id}/explorer/chat`, body);
+    },
+  },
 
   // ── Locations ──
   {
@@ -1804,6 +1835,37 @@ const tools = [
       required: ["id"],
     },
     handler: (args) => fetchAPI(`/api/locations/${args.id}/blueprint`),
+  },
+  {
+    name: "entity_explorer_chat_location",
+    description:
+      "Explore a location via the Entity Explorer. Describe a change to a location and see which scenes are affected. The AI finds relevant chapters and analyzes ripple effects. Requires authentication and BYOK AI provider.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Location UUID" },
+        question: { type: "string", description: "The question or change to explore" },
+        history: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              role: { type: "string", enum: ["user", "assistant"] },
+              content: { type: "string" },
+            },
+          },
+          description: "Previous conversation turns",
+        },
+        book_id: { type: "string", description: "Book UUID for semantic search context" },
+      },
+      required: ["id", "question"],
+    },
+    handler: (args) => {
+      const body = { question: args.question };
+      if (args.history) body.history = args.history;
+      if (args.book_id) body.book_id = args.book_id;
+      return postAPI(`/api/locations/${args.id}/explorer/chat`, body);
+    },
   },
 
   // ── Creatures ──
@@ -1997,6 +2059,37 @@ const tools = [
     },
     handler: (args) =>
       postAPI(`/api/creatures/${args.id}/suggestions`, { field: args.field }),
+  },
+  {
+    name: "entity_explorer_chat_creature",
+    description:
+      "Interview a creature via the Entity Explorer. Chat with the creature in character — the AI responds as the creature, grounded in your chapter content, entity details, and relationships. Requires authentication and BYOK AI provider.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Creature UUID" },
+        question: { type: "string", description: "The question to ask the creature" },
+        history: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              role: { type: "string", enum: ["user", "assistant"] },
+              content: { type: "string" },
+            },
+          },
+          description: "Previous conversation turns",
+        },
+        book_id: { type: "string", description: "Book UUID for semantic search context" },
+      },
+      required: ["id", "question"],
+    },
+    handler: (args) => {
+      const body = { question: args.question };
+      if (args.history) body.history = args.history;
+      if (args.book_id) body.book_id = args.book_id;
+      return postAPI(`/api/creatures/${args.id}/explorer/chat`, body);
+    },
   },
 
   // ── Plots ──
@@ -2269,6 +2362,37 @@ const tools = [
       required: ["book_id"],
     },
     handler: (args) => postAPI(`/api/books/${args.book_id}/plot/auto-map`),
+  },
+  {
+    name: "entity_explorer_chat_plot",
+    description:
+      "Explore a plot via the Entity Explorer. Explore branching possibilities, tension points, unresolved threads, and potential turning points. Requires authentication and BYOK AI provider.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Plot UUID" },
+        question: { type: "string", description: "The question or direction to explore" },
+        history: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              role: { type: "string", enum: ["user", "assistant"] },
+              content: { type: "string" },
+            },
+          },
+          description: "Previous conversation turns",
+        },
+        book_id: { type: "string", description: "Book UUID for semantic search context" },
+      },
+      required: ["id", "question"],
+    },
+    handler: (args) => {
+      const body = { question: args.question };
+      if (args.history) body.history = args.history;
+      if (args.book_id) body.book_id = args.book_id;
+      return postAPI(`/api/plots/${args.id}/explorer/chat`, body);
+    },
   },
 
   // ── Family Trees ──
