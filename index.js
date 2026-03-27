@@ -1303,33 +1303,8 @@ const tools = [
   },
 
   // ─── AI Writing Tools ───
-
-  {
-    name: "ai_writing_feedback",
-    description:
-      "Get AI-generated constructive feedback on a work's clarity, pacing, voice, and engagement. Only works on your own writing.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        work_id: { type: "string", description: "UUID of the work" },
-      },
-      required: ["work_id"],
-    },
-    handler: (args) => postAPI(`/api/writing/${args.work_id}/ai-feedback`, {}),
-  },
-  {
-    name: "ai_title_summary_suggest",
-    description:
-      "Get AI-suggested titles and summaries for a work. Only works on your own writing.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        work_id: { type: "string", description: "UUID of the work" },
-      },
-      required: ["work_id"],
-    },
-    handler: (args) => postAPI(`/api/writing/${args.work_id}/ai-suggest`, {}),
-  },
+  // ai_writing_feedback and ai_title_summary_suggest removed.
+  // AI writing features are now available only in book chapters.
 
   // ── Extended Writing ──
   {

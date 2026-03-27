@@ -115,8 +115,6 @@ Create, publish, and manage creative writing — poems, short stories, essays, n
 | `create_series` | Yes | Create a new writing series. |
 | `list_my_series` | Yes | List your writing series. |
 | `add_work_to_series` | Yes | Add a work to a series. |
-| `ai_writing_feedback` | Yes | Get AI feedback on clarity, pacing, voice, and engagement. |
-| `ai_title_summary_suggest` | Yes | Get AI-suggested titles and summaries. |
 
 ### Characters
 
