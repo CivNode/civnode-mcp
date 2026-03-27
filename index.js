@@ -2201,6 +2201,76 @@ const tools = [
     handler: (args) => postAPI(`/api/plots/${args.id}/unpublish`),
   },
 
+  // ── Plot Designer (Book-level) ──
+  {
+    name: "list_plot_templates",
+    description: "List available plot structure templates (Three-Act, Hero's Journey, etc.).",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/plot-templates"),
+  },
+  {
+    name: "get_book_plot",
+    description: "Get the plot linked to a book, including all acts, scenes, and beats. Returns {plot: null} if no plot exists. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+      },
+      required: ["book_id"],
+    },
+    handler: (args) => fetchAPI(`/api/books/${args.book_id}/plot`),
+  },
+  {
+    name: "create_book_plot_from_template",
+    description: "Create a plot for a book from a template. The book must not already have a plot. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+        template_id: { type: "string", description: "Template ID from list_plot_templates" },
+      },
+      required: ["book_id", "template_id"],
+    },
+    handler: (args) => postAPI(`/api/books/${args.book_id}/plot/from-template`, { template_id: args.template_id }),
+  },
+  {
+    name: "delete_book_plot",
+    description: "Delete the plot linked to a book. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+      },
+      required: ["book_id"],
+    },
+    handler: (args) => deleteAPI(`/api/books/${args.book_id}/plot`),
+  },
+  {
+    name: "get_beat_suggestions",
+    description: "Get story evidence suggestions for a specific beat. Uses three tiers: chapter analysis, text stats, and semantic search. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+        beat_id: { type: "string", description: "Beat UUID" },
+      },
+      required: ["book_id", "beat_id"],
+    },
+    handler: (args) => fetchAPI(`/api/books/${args.book_id}/plot/beats/${args.beat_id}/suggestions`),
+  },
+  {
+    name: "auto_map_plot",
+    description: "Batch-map story content to all empty beats in a book's plot. Uses analysis + AI. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+      },
+      required: ["book_id"],
+    },
+    handler: (args) => postAPI(`/api/books/${args.book_id}/plot/auto-map`),
+  },
+
   // ── Family Trees ──
   {
     name: "list_trees",
