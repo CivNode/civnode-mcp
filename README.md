@@ -230,7 +230,7 @@ Full book management — create books with chapters, link compendium entities, e
 | `list_books` | Yes | List your books. |
 | `get_book` | Yes | Get book details and linked entities. |
 | `create_book` | Yes | Create a book (title and book_type required). Types: novel, novella, short_story_collection, poetry_collection, anthology, screenplay, other. For screenplays, also pass screenplay_format. |
-| `update_book` | Yes | Update book metadata (title, subtitle, blurb, genre, etc.). Screenplays support screenplay_format, screenplay_font, screenplay_title_page. |
+| `update_book` | Yes | Update book metadata (title, subtitle, blurb, genre, etc.). Set `published: true/false` to publish or unpublish a book to the marketplace. Screenplays support screenplay_format, screenplay_font, screenplay_title_page. |
 | `delete_book` | Yes | Delete a book and all chapters. |
 | `list_chapters` | Yes | List chapters in a book. |
 | `get_chapter` | Yes | Get a chapter's content and metadata. |
