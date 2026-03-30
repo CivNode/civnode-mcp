@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 248 tools covering:
+ * 256 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -2526,7 +2526,7 @@ const tools = [
         title: { type: "string", description: "Book title (required)" },
         book_type: {
           type: "string",
-          description: "Type: novel, novella, short_story_collection, poetry_collection, anthology, screenplay, other (required)",
+          description: "Type: novel, poetry_collection, essay_collection, screenplay (required)",
         },
         screenplay_format: {
           type: "string",
@@ -2925,6 +2925,22 @@ const tools = [
       ),
   },
 
+  // ── Story Graph ──
+  {
+    name: "writing_graph_rebuild",
+    description:
+      "Rebuild the story graph for a book from stored text_stats. Runs in background with WebSocket progress. Use for catch-up when chapters were analyzed before graph pipeline existed. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+      },
+      required: ["book_id"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/books/${args.book_id}/graph/rebuild`, { method: "POST" }),
+  },
+
   // ── Observatory (Insights) ──
   {
     name: "observatory_insights",
@@ -3106,6 +3122,125 @@ const tools = [
       "Get compendium entities not linked to any book or work. Useful for finding orphaned characters, creatures, locations, plots, and trees. Requires authentication.",
     inputSchema: { type: "object", properties: {} },
     handler: () => fetchAPI("/api/compendium/unassigned"),
+  },
+  {
+    name: "create_collection",
+    description:
+      "Create a new collection to group books and works together. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Collection title (required)" },
+        description: { type: "string", description: "Optional description" },
+      },
+      required: ["title"],
+    },
+    handler: (args) => {
+      const body = { title: args.title };
+      if (args.description) body.description = args.description;
+      return postAPI("/api/collections", body);
+    },
+  },
+  {
+    name: "list_collections",
+    description:
+      "List all collections for the authenticated user.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => getAPI("/api/collections"),
+  },
+  {
+    name: "get_collection",
+    description:
+      "Get a collection with its items. Returns collection metadata and ordered list of books/works.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Collection ID (required)" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => getAPI(`/api/collections/${args.id}`),
+  },
+  {
+    name: "update_collection",
+    description:
+      "Update a collection's title or description. Pass only fields to change.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Collection ID (required)" },
+        title: { type: "string", description: "New title" },
+        description: { type: "string", description: "New description" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => {
+      const body = {};
+      if (args.title !== undefined) body.title = args.title;
+      if (args.description !== undefined) body.description = args.description;
+      return patchAPI(`/api/collections/${args.id}`, body);
+    },
+  },
+  {
+    name: "delete_collection",
+    description:
+      "Delete a collection. Items inside are unlinked but not deleted.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Collection ID (required)" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => deleteAPI(`/api/collections/${args.id}`),
+  },
+  {
+    name: "collection_add_item",
+    description:
+      "Add a book or work to a collection. Provide either book_id or work_id.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        collection_id: { type: "string", description: "Collection ID (required)" },
+        book_id: { type: "string", description: "Book ID to add" },
+        work_id: { type: "string", description: "Work ID to add" },
+      },
+      required: ["collection_id"],
+    },
+    handler: (args) => {
+      const body = {};
+      if (args.book_id) body.book_id = args.book_id;
+      if (args.work_id) body.work_id = args.work_id;
+      return postAPI(`/api/collections/${args.collection_id}/items`, body);
+    },
+  },
+  {
+    name: "collection_remove_item",
+    description:
+      "Remove an item from a collection. The original book/work is not deleted.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        collection_id: { type: "string", description: "Collection ID (required)" },
+        item_id: { type: "string", description: "Collection item ID to remove (required)" },
+      },
+      required: ["collection_id", "item_id"],
+    },
+    handler: (args) => deleteAPI(`/api/collections/${args.collection_id}/items/${args.item_id}`),
+  },
+  {
+    name: "collection_reorder",
+    description:
+      "Reorder items in a collection. Provide the full ordered list of item IDs.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        collection_id: { type: "string", description: "Collection ID (required)" },
+        item_ids: { type: "array", items: { type: "string" }, description: "Ordered array of item IDs (required)" },
+      },
+      required: ["collection_id", "item_ids"],
+    },
+    handler: (args) => putAPI(`/api/collections/${args.collection_id}/items/reorder`, { item_ids: args.item_ids }),
   },
   {
     name: "marketplace_book_showcase",

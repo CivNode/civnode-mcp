@@ -2,7 +2,7 @@
 
 MCP server for [CivNode](https://civnode.com) — the AI-powered creative writing platform where every human gets exactly one page (a Monument) displayed at random. No algorithm, no likes, no followers.
 
-**248 tools** for writing, world-building (characters, locations, creatures, plots, family trees), entity exploration, books, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
+**256 tools** for writing, world-building (characters, locations, creatures, plots, family trees), entity exploration, books, collections, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
 
 ## Quick Start
 
@@ -229,7 +229,7 @@ Full book management — create books with chapters, link compendium entities, e
 |------|------|-------------|
 | `list_books` | Yes | List your books. |
 | `get_book` | Yes | Get book details and linked entities. |
-| `create_book` | Yes | Create a book (title and book_type required). Types: novel, novella, short_story_collection, poetry_collection, anthology, screenplay, other. For screenplays, also pass screenplay_format. |
+| `create_book` | Yes | Create a book (title and book_type required). Types: novel, poetry_collection, essay_collection, screenplay. For screenplays, also pass screenplay_format. |
 | `update_book` | Yes | Update book metadata (title, subtitle, blurb, genre, etc.). Set `published: true/false` to publish or unpublish a book to the marketplace. Screenplays support screenplay_format, screenplay_font, screenplay_title_page. |
 | `delete_book` | Yes | Delete a book and all chapters. |
 | `list_chapters` | Yes | List chapters in a book. |
@@ -245,6 +245,21 @@ Full book management — create books with chapters, link compendium entities, e
 | `book_entities` | Yes | Get all entity types linked to a book in one call (characters, creatures, locations, plots, trees). |
 | `compendium_unassigned` | Yes | Get entities not linked to any book or work. |
 | `get_public_book` | No | Get a published book's public info. |
+
+### Collections
+
+Group books and works into ordered collections.
+
+| Tool | Auth | Description |
+|------|------|-------------|
+| `create_collection` | Yes | Create a new collection (title required, optional description). |
+| `list_collections` | Yes | List all your collections. |
+| `get_collection` | Yes | Get a collection with its ordered items (books and works). |
+| `update_collection` | Yes | Update a collection's title or description. |
+| `delete_collection` | Yes | Delete a collection (items are unlinked, not deleted). |
+| `collection_add_item` | Yes | Add a book or work to a collection. |
+| `collection_remove_item` | Yes | Remove an item from a collection. |
+| `collection_reorder` | Yes | Reorder items in a collection by passing ordered item IDs. |
 
 ### Canvases
 
