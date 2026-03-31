@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 256 tools covering:
+ * 262 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -282,30 +282,140 @@ const tools = [
       }),
   },
 
-  // ── Working On ──
+  // ── Showcase ──
   {
-    name: "user_update_working_on",
+    name: "showcase_list",
     description:
-      'Set or clear the "currently working on" status shown on your profile. Requires authentication.',
+      "Get a user's public showcase — the curated list of books, works, and collections they have chosen to share. Supports search, filtering by type, and pagination.",
     inputSchema: {
       type: "object",
       properties: {
-        text: {
+        alias: { type: "string", description: "User alias" },
+        q: { type: "string", description: "Search by title (optional)" },
+        type: {
           type: "string",
-          description:
-            "What you are working on (max 100 chars). Send empty string or omit to clear.",
+          description: "Filter by item type: book, work, collection (optional)",
         },
-        work_id: {
+        sort: { type: "string", description: "Sort order (optional)" },
+        limit: { type: "integer", description: "Max items (default 50, max 100)" },
+        offset: { type: "integer", description: "Pagination offset (default 0)" },
+      },
+      required: ["alias"],
+    },
+    handler: (args) => {
+      const alias = encodeURIComponent(args.alias);
+      const params = new URLSearchParams();
+      if (args.q) params.set("q", args.q);
+      if (args.type) params.set("type", args.type);
+      if (args.sort) params.set("sort", args.sort);
+      if (args.limit) params.set("limit", String(args.limit));
+      if (args.offset) params.set("offset", String(args.offset));
+      const qs = params.toString();
+      return fetchAPI(`/api/users/${alias}/showcase${qs ? "?" + qs : ""}`);
+    },
+  },
+  {
+    name: "showcase_count",
+    description:
+      "Get the number of items in a user's public showcase.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        alias: { type: "string", description: "User alias" },
+      },
+      required: ["alias"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/users/${encodeURIComponent(args.alias)}/showcase/count`),
+  },
+  {
+    name: "showcase_add",
+    description:
+      "Add a book, work, or collection to your public showcase. Exactly one of book_id, work_id, or collection_id must be provided. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID (provide exactly one ID)" },
+        work_id: { type: "string", description: "Work UUID (provide exactly one ID)" },
+        collection_id: {
           type: "string",
-          description: "Optional UUID of a work to link",
+          description: "Collection UUID (provide exactly one ID)",
+        },
+        author_note: {
+          type: "string",
+          description: "Optional note about the item (max 280 chars)",
         },
       },
     },
+    handler: (args) => {
+      const body = {};
+      if (args.book_id) body.book_id = args.book_id;
+      if (args.work_id) body.work_id = args.work_id;
+      if (args.collection_id) body.collection_id = args.collection_id;
+      if (args.author_note) body.author_note = args.author_note;
+      return postAPI("/api/showcase", body);
+    },
+  },
+  {
+    name: "showcase_mine",
+    description:
+      "List your own showcase items. Returns all items you have added to your public showcase. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+    handler: () => fetchAPI("/api/showcase/mine"),
+  },
+  {
+    name: "showcase_update_note",
+    description:
+      "Update the author note on a showcase item. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Showcase item UUID" },
+        author_note: {
+          type: "string",
+          description: "New note (max 280 chars). Send empty string to clear.",
+        },
+      },
+      required: ["id"],
+    },
     handler: (args) =>
-      putAPI("/api/users/me/working-on", {
-        text: args.text || "",
-        work_id: args.work_id || null,
+      patchAPI(`/api/showcase/${args.id}`, {
+        author_note: args.author_note || "",
       }),
+  },
+  {
+    name: "showcase_remove",
+    description:
+      "Retract an item from your public showcase. The item remains in My Writing but is no longer publicly visible. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Showcase item UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => deleteAPI(`/api/showcase/${args.id}`),
+  },
+  {
+    name: "showcase_reorder",
+    description:
+      "Set the display order of your showcase items by providing item IDs in the desired order. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        item_ids: {
+          type: "array",
+          items: { type: "string" },
+          description: "Showcase item UUIDs in desired display order",
+        },
+      },
+      required: ["item_ids"],
+    },
+    handler: (args) =>
+      putAPI("/api/showcase/reorder", { item_ids: args.item_ids }),
   },
 
   // ── Letters ──
@@ -431,11 +541,6 @@ const tools = [
           items: { type: "string" },
           description: "1-3 mood tags",
         },
-        reach: {
-          type: "string",
-          description:
-            "Visibility: private, limited, open (default: open)",
-        },
         identity_mode: {
           type: "string",
           description: "Identity: alias, real_name, or incognito (default: alias)",
@@ -450,7 +555,6 @@ const tools = [
         form: args.form,
         mood_tags: args.mood_tags || [],
         identity_mode: args.identity_mode || "alias",
-        reach: args.reach || "open",
       }),
   },
   {
@@ -1325,7 +1429,7 @@ const tools = [
   {
     name: "update_work",
     description:
-      "Update a writing work's content, title, mood tags, or visibility. Requires authentication.",
+      "Update a writing work's content, title, mood tags, or identity mode. Requires authentication.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1341,10 +1445,6 @@ const tools = [
           type: "string",
           description: "Identity: alias, real_name, or incognito",
         },
-        reach: {
-          type: "string",
-          description: "Visibility: private, limited, open",
-        },
       },
       required: ["id"],
     },
@@ -1354,7 +1454,6 @@ const tools = [
       if (args.body_markdown) body.body_markdown = args.body_markdown;
       if (args.mood_tags) body.mood_tags = args.mood_tags;
       if (args.identity_mode) body.identity_mode = args.identity_mode;
-      if (args.reach) body.reach = args.reach;
       return putAPI(`/api/works/${args.id}`, body);
     },
   },
