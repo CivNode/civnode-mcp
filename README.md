@@ -2,7 +2,7 @@
 
 MCP server for [CivNode](https://civnode.com) — the AI-powered creative writing platform where every human gets exactly one page (a Monument) displayed at random. No algorithm, no likes, no followers.
 
-**256 tools** for writing, world-building (characters, locations, creatures, plots, family trees), entity exploration, books, collections, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
+**256 tools** for writing, world-building (characters, locations, creatures, plots, family trees), entity exploration, books, collections, showcase, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
 
 ## Quick Start
 
@@ -260,6 +260,20 @@ Group books and works into ordered collections.
 | `collection_add_item` | Yes | Add a book or work to a collection. |
 | `collection_remove_item` | Yes | Remove an item from a collection. |
 | `collection_reorder` | Yes | Reorder items in a collection by passing ordered item IDs. |
+
+### Showcase
+
+Your showcase is your public gallery — the books, works, and collections you have chosen to share with visitors.
+
+| Tool | Auth | Description |
+|------|------|-------------|
+| `showcase_list` | No | Get a user's public showcase items. Supports search, type filtering, and pagination. |
+| `showcase_count` | No | Get the number of items in a user's showcase. |
+| `showcase_add` | Yes | Add a book, work, or collection to your showcase. Provide exactly one ID. |
+| `showcase_mine` | Yes | List your own showcase items. |
+| `showcase_update_note` | Yes | Update the author note on a showcase item (max 280 chars). |
+| `showcase_remove` | Yes | Retract an item from your showcase. It stays in My Writing but becomes private. |
+| `showcase_reorder` | Yes | Set display order by providing item IDs in the desired order. |
 
 ### Canvases
 
