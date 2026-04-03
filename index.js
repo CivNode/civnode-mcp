@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 267 tools covering:
+ * 272 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -1252,6 +1252,75 @@ const tools = [
       if (args.offset) params.set("offset", args.offset);
       return getAPI(`/api/author/sales?${params}`);
     },
+  },
+
+  // ─── Downloads & Library ───
+  {
+    name: "purchase_download",
+    description:
+      "Download the encrypted .ecivbook file for a purchased book. Returns binary data (application/octet-stream). The file is encrypted and requires a decryption token from purchase_token. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        purchase_id: { type: "string", description: "UUID of the purchase" },
+      },
+      required: ["purchase_id"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/purchases/${args.purchase_id}/download`),
+  },
+  {
+    name: "purchase_token",
+    description:
+      "Get the decryption token (wrapped key) for a purchased book. The token is needed to decrypt the .ecivbook file downloaded via purchase_download. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        purchase_id: { type: "string", description: "UUID of the purchase" },
+      },
+      required: ["purchase_id"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/purchases/${args.purchase_id}/token`),
+  },
+  {
+    name: "purchase_token_status",
+    description:
+      "Check whether a purchase's decryption token is still valid or needs updating. Returns validity, version info, and whether a newer key version is available. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        purchase_id: { type: "string", description: "UUID of the purchase" },
+      },
+      required: ["purchase_id"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/purchases/${args.purchase_id}/status`),
+  },
+  {
+    name: "user_library",
+    description:
+      "List all books the current user has purchased, with download and encryption metadata. Returns book titles, authors, cover URLs, purchase dates, and encryption key versions. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/user/library"),
+  },
+  {
+    name: "purchase_claim_free",
+    description:
+      "Claim a free book (one where the author set no minimum price). Creates a purchase record with zero amount, granting full access and download rights. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        item_type: { type: "string", enum: ["book"], description: "Type of item (currently only 'book')" },
+        item_id: { type: "string", description: "UUID of the book to claim" },
+      },
+      required: ["item_type", "item_id"],
+    },
+    handler: (args) =>
+      postAPI("/api/purchase/claim", {
+        item_type: args.item_type,
+        item_id: args.item_id,
+      }),
   },
 
   // ─── Social Accounts ───
