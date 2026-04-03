@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 262 tools covering:
+ * 267 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -1168,6 +1168,90 @@ const tools = [
       "Cancel your supporter subscription. Cancels at the end of the current billing period. Requires authentication.",
     inputSchema: { type: "object", properties: {} },
     handler: () => postAPI("/api/stripe/cancel"),
+  },
+
+  // ─── Purchases & Earnings ───
+  {
+    name: "purchase_checkout",
+    description:
+      "Create a Stripe checkout session to purchase a book or work. Returns a checkout URL. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        item_type: { type: "string", enum: ["book", "work"], description: "Type of item to purchase" },
+        item_id: { type: "string", description: "UUID of the book or work" },
+        amount_cents: { type: "integer", description: "Amount to pay in cents (must be >= minimum price)" },
+        success_url: { type: "string", description: "URL to redirect to after successful payment" },
+        cancel_url: { type: "string", description: "URL to redirect to if payment is cancelled" },
+      },
+      required: ["item_type", "item_id", "amount_cents", "success_url", "cancel_url"],
+    },
+    handler: (args) =>
+      postAPI("/api/purchase/checkout", {
+        item_type: args.item_type,
+        item_id: args.item_id,
+        amount_cents: args.amount_cents,
+        success_url: args.success_url,
+        cancel_url: args.cancel_url,
+      }),
+  },
+  {
+    name: "check_purchase",
+    description:
+      "Check if the current user has purchased a specific book or work. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        item_type: { type: "string", enum: ["book", "work"], description: "Type of item" },
+        item_id: { type: "string", description: "UUID of the book or work" },
+      },
+      required: ["item_type", "item_id"],
+    },
+    handler: (args) =>
+      getAPI(`/api/purchases/check?item_type=${args.item_type}&item_id=${args.item_id}`),
+  },
+  {
+    name: "list_my_purchases",
+    description:
+      "List all purchases made by the current user. Returns purchase history with item titles, authors, and amounts. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", description: "Max results (default 50, max 100)" },
+        offset: { type: "integer", description: "Offset for pagination" },
+      },
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.limit) params.set("limit", args.limit);
+      if (args.offset) params.set("offset", args.offset);
+      return getAPI(`/api/purchases?${params}`);
+    },
+  },
+  {
+    name: "get_author_balance",
+    description:
+      "Get the current user's author earnings balance and lifetime totals. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => getAPI("/api/author/balance"),
+  },
+  {
+    name: "list_author_sales",
+    description:
+      "List all sales for the current user as an author. Shows buyer info, amounts, fees, and author share. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", description: "Max results (default 50, max 100)" },
+        offset: { type: "integer", description: "Offset for pagination" },
+      },
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.limit) params.set("limit", args.limit);
+      if (args.offset) params.set("offset", args.offset);
+      return getAPI(`/api/author/sales?${params}`);
+    },
   },
 
   // ─── Social Accounts ───

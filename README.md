@@ -426,6 +426,11 @@ Real-time co-writing and draft sharing.
 | `get_supporter_status` | Yes | Check supporter status. |
 | `supporter_checkout` | Yes | Start Stripe checkout for supporter ($5/month). |
 | `supporter_cancel` | Yes | Cancel supporter subscription. |
+| `purchase_checkout` | Yes | Create Stripe checkout to purchase a book or work. |
+| `check_purchase` | Yes | Check if current user has purchased a specific item. |
+| `list_my_purchases` | Yes | List all purchases by current user. |
+| `get_author_balance` | Yes | Get author earnings balance and lifetime totals. |
+| `list_author_sales` | Yes | List all sales for current user as author. |
 | `ai_usage_log_local` | Yes | Log local AI usage (Ollama, ComfyUI) from the browser. |
 
 ---
