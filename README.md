@@ -2,7 +2,7 @@
 
 MCP server for [CivNode](https://civnode.com) — the AI-powered creative writing platform where every human gets exactly one page (a Monument) displayed at random. No algorithm, no likes, no followers.
 
-**256 tools** for writing, world-building (characters, locations, creatures, plots, family trees), entity exploration, books, collections, showcase, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
+**257 tools** for writing, world-building (characters, locations, creatures, plots, family trees), entity exploration, books, collections, showcase, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
 
 ## Quick Start
 
@@ -432,6 +432,7 @@ Real-time co-writing and draft sharing.
 | `get_author_balance` | Yes | Get author earnings balance and lifetime totals. |
 | `list_author_sales` | Yes | List all sales for current user as author. |
 | `ai_usage_log_local` | Yes | Log local AI usage (Ollama, ComfyUI) from the browser. |
+| `link_preview` | No | Get a rich preview for an internal CivNode URL. Returns title, author, image, and meta for published content. |
 
 ---
 
@@ -535,6 +536,14 @@ export_book({
 ```javascript
 import_fountain({
   text: "Title: The Last Lighthouse\nCredit: Written by\nAuthor: Jane Doe\n\nINT. LIGHTHOUSE - NIGHT\n\nA lone KEEPER tends the light."
+})
+```
+
+### Get a Link Preview
+
+```javascript
+link_preview({
+  url: "/books/abc-123/read"
 })
 ```
 

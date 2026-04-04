@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 272 tools covering:
+ * 273 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -3989,6 +3989,26 @@ const tools = [
       required: ["provider", "action"],
     },
     handler: (args) => postAPI("/api/settings/ai-usage/log-local", args),
+  },
+
+  // ── Link Preview ──
+  {
+    name: "link_preview",
+    description:
+      "Get a rich preview for an internal CivNode URL. Returns title, subtitle, description, image, author, and meta for published content. Returns 404 for private/unpublished content.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          description:
+            'Relative CivNode URL, e.g. /books/{id}/read, /civpage/alias, /u/alias/thread/slug, /works/{id}',
+        },
+      },
+      required: ["url"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/link-preview?url=${encodeURIComponent(args.url)}`),
   },
 ];
 
