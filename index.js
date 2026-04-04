@@ -3128,7 +3128,7 @@ const tools = [
   {
     name: "research_analyze_chapter",
     description:
-      "Analyze a chapter for characters, themes, plot points, and relationships. Requires authentication and an AI provider.",
+      "Trigger tiered analysis of a chapter. Core (Tier 1) extracts characters, themes, arcs, and interactions. Deep (Tier 2) adds voice profiles, foreshadowing, craft metrics, and editorial summary (requires cloud AI). Requires authentication and an AI provider.",
     inputSchema: {
       type: "object",
       properties: {

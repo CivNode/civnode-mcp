@@ -306,12 +306,12 @@ Contextual feedback anchored to specific text passages in works and monuments.
 
 ### Research & Observatory
 
-Semantic search, chapter analysis, writing insights, and AI-powered questions about your work.
+Semantic search, tiered chapter analysis, writing insights, and AI-powered questions about your work.
 
 | Tool | Auth | Description |
 |------|------|-------------|
 | `research_search` | Yes | Semantic search across research notes and analyzed content. |
-| `research_analyze_chapter` | Yes | Analyze a chapter for characters, themes, plot points. Requires AI provider. |
+| `research_analyze_chapter` | Yes | Trigger tiered chapter analysis. Core (Tier 1): characters, themes, arcs, interactions. Deep (Tier 2): voice, foreshadowing, craft metrics. Requires AI provider. |
 | `research_intelligence` | Yes | Get aggregated intelligence: character appearances, themes, timeline. |
 | `research_character_graph` | Yes | Get a character's relationship graph and arc. |
 | `observatory_insights` | Yes | Get writing insights and patterns. |
