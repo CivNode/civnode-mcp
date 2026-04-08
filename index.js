@@ -1766,6 +1766,196 @@ const tools = [
     },
   },
 
+  // ── Group Discovery ──
+  {
+    name: "group_directory_list",
+    description:
+      "Browse the public group directory. Returns groups that have opted in with their genre, skill level, language, and availability. No authentication required.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        type:        { type: "string", description: "Filter by group type: critique, accountability, workshop, co_writing, sprint" },
+        genre:       { type: "string", description: "Filter by genre focus (partial match)" },
+        skill_level: { type: "string", description: "Filter by skill level: beginner, intermediate, advanced, mixed" },
+        language:    { type: "string", description: "Filter by language code (default: en)" },
+        has_openings:{ type: "boolean", description: "Only show groups with open spots" },
+        limit:       { type: "integer", description: "Max results (default 20, max 50)" },
+        offset:      { type: "integer", description: "Pagination offset (default 0)" },
+      },
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.type)        params.set("type", args.type);
+      if (args.genre)       params.set("genre", args.genre);
+      if (args.skill_level) params.set("skill_level", args.skill_level);
+      if (args.language)    params.set("language", args.language);
+      if (args.has_openings) params.set("has_openings", "true");
+      if (args.limit)       params.set("limit", args.limit);
+      if (args.offset)      params.set("offset", args.offset);
+      return fetchAPI(`/api/groups/directory?${params}`);
+    },
+  },
+  {
+    name: "group_directory_settings_get",
+    description:
+      "Get the directory settings for a group. No authentication required.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        group_id: { type: "string", description: "Group UUID" },
+      },
+      required: ["group_id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.group_id}/directory-settings`),
+  },
+  {
+    name: "group_directory_settings_update",
+    description:
+      "Update the public directory listing for a group. Only the owner or a leader can do this. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        group_id:               { type: "string", description: "Group UUID" },
+        genre_focus:            { type: "string", description: "Genre or writing style focus" },
+        skill_level:            { type: "string", description: "beginner | intermediate | advanced | mixed" },
+        language:               { type: "string", description: "Language code (default: en)" },
+        schedule_description:   { type: "string", description: "Human-readable schedule (e.g. 'Weekly on Sundays')" },
+        accepting_applications: { type: "boolean", description: "Whether the group accepts applications" },
+        sample_required:        { type: "boolean", description: "Whether applicants must provide a writing sample" },
+      },
+      required: ["group_id"],
+    },
+    handler: (args) =>
+      putAPI(`/api/groups/${args.group_id}/directory-settings`, {
+        genre_focus:            args.genre_focus || "",
+        skill_level:            args.skill_level || "mixed",
+        language:               args.language || "en",
+        schedule_description:   args.schedule_description || "",
+        accepting_applications: args.accepting_applications !== false,
+        sample_required:        args.sample_required || false,
+      }),
+  },
+  {
+    name: "group_apply",
+    description:
+      "Submit a membership application to a listed group. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        group_id:     { type: "string", description: "Group UUID" },
+        introduction: { type: "string", description: "Why you want to join" },
+        sample_text:  { type: "string", description: "Writing sample (required if the group requests one)" },
+      },
+      required: ["group_id", "introduction"],
+    },
+    handler: (args) =>
+      postAPI(`/api/groups/${args.group_id}/apply`, {
+        introduction: args.introduction,
+        sample_text:  args.sample_text || "",
+      }),
+  },
+  {
+    name: "group_list_applications",
+    description:
+      "List applications for a group. Caller must be a leader or owner. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        group_id: { type: "string", description: "Group UUID" },
+        status:   { type: "string", description: "Filter by status: pending | approved | declined (omit for all)" },
+      },
+      required: ["group_id"],
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.status) params.set("status", args.status);
+      return fetchAPI(`/api/groups/${args.group_id}/applications?${params}`);
+    },
+  },
+  {
+    name: "group_approve_application",
+    description:
+      "Approve a membership application. Adds the applicant as a member. Caller must be a leader or owner. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        application_id: { type: "string", description: "Application UUID" },
+      },
+      required: ["application_id"],
+    },
+    handler: (args) => postAPI(`/api/groups/applications/${args.application_id}/approve`, {}),
+  },
+  {
+    name: "group_decline_application",
+    description:
+      "Decline a membership application with an optional reason. Caller must be a leader or owner. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        application_id: { type: "string", description: "Application UUID" },
+        reason:         { type: "string", description: "Optional reason shown to no one (internal notes)" },
+      },
+      required: ["application_id"],
+    },
+    handler: (args) =>
+      postAPI(`/api/groups/applications/${args.application_id}/decline`, {
+        reason: args.reason || "",
+      }),
+  },
+  {
+    name: "group_find_matches",
+    description:
+      "Find listed groups that match your preferences, ranked by compatibility score. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        preferred_type:       { type: "string", description: "Group type: critique, accountability, workshop, co_writing, sprint" },
+        preferred_genre:      { type: "string", description: "Genre preference" },
+        experience_level:     { type: "string", description: "beginner | intermediate | advanced | mixed" },
+        commitment_frequency: { type: "string", description: "How often you can commit (e.g. weekly)" },
+        timezone:             { type: "string", description: "Your timezone (e.g. Europe/London)" },
+      },
+    },
+    handler: (args) =>
+      postAPI("/api/groups/match", {
+        preferred_type:       args.preferred_type || "critique",
+        preferred_genre:      args.preferred_genre || "",
+        experience_level:     args.experience_level || "mixed",
+        commitment_frequency: args.commitment_frequency || "",
+        timezone:             args.timezone || "",
+      }),
+  },
+  {
+    name: "group_match_pool_join",
+    description:
+      "Join the user matching pool so you can be paired with other unmatched writers to form a new group. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        preferred_type:       { type: "string", description: "Group type preference" },
+        preferred_genre:      { type: "string", description: "Genre preference" },
+        experience_level:     { type: "string", description: "beginner | intermediate | advanced | mixed" },
+        commitment_frequency: { type: "string", description: "How often you can commit" },
+        timezone:             { type: "string", description: "Your timezone" },
+      },
+    },
+    handler: (args) =>
+      postAPI("/api/groups/match-pool", {
+        preferred_type:       args.preferred_type || "critique",
+        preferred_genre:      args.preferred_genre || "",
+        experience_level:     args.experience_level || "mixed",
+        commitment_frequency: args.commitment_frequency || "",
+        timezone:             args.timezone || "",
+      }),
+  },
+  {
+    name: "group_match_pool_leave",
+    description:
+      "Leave the user matching pool. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => deleteAPI("/api/groups/match-pool"),
+  },
+
   // ── Notifications ──
   {
     name: "list_notifications",
