@@ -1956,6 +1956,177 @@ const tools = [
     handler: () => deleteAPI("/api/groups/match-pool"),
   },
 
+  // ── Group Challenges ──
+  {
+    name: "group_challenge_create",
+    description:
+      "Create a new challenge in a group. Caller must be owner, leader, or moderator. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      required: ["group_id", "prompt", "deadline"],
+      properties: {
+        group_id: { type: "string", description: "Group UUID" },
+        prompt: { type: "string", description: "The writing prompt" },
+        deadline: { type: "string", description: "ISO 8601 deadline timestamp" },
+        word_limit: { type: "integer", description: "Optional word limit for entries" },
+        voting_enabled: { type: "boolean", description: "Whether to open a voting round after the challenge closes (default false)" },
+      },
+    },
+    handler: (args) =>
+      postAPI(`/api/groups/${args.group_id}/challenges`, {
+        prompt: args.prompt,
+        deadline: args.deadline,
+        word_limit: args.word_limit || null,
+        voting_enabled: args.voting_enabled || false,
+      }),
+  },
+  {
+    name: "group_challenge_list",
+    description:
+      "List challenges for a group, optionally filtered by status (open/closed/archived). No authentication required.",
+    inputSchema: {
+      type: "object",
+      required: ["group_id"],
+      properties: {
+        group_id: { type: "string", description: "Group UUID" },
+        status: { type: "string", description: "Filter by status: open, closed, archived" },
+      },
+    },
+    handler: (args) => {
+      const qs = args.status ? `?status=${encodeURIComponent(args.status)}` : "";
+      return fetchAPI(`/api/groups/${args.group_id}/challenges${qs}`);
+    },
+  },
+  {
+    name: "group_challenge_get",
+    description:
+      "Get a single group challenge by ID. No authentication required.",
+    inputSchema: {
+      type: "object",
+      required: ["challenge_id"],
+      properties: {
+        challenge_id: { type: "string", description: "Challenge UUID" },
+      },
+    },
+    handler: (args) => fetchAPI(`/api/groups/challenges/${args.challenge_id}`),
+  },
+  {
+    name: "group_challenge_entry_submit",
+    description:
+      "Submit or update an entry for an open group challenge. Requires authentication and group membership.",
+    inputSchema: {
+      type: "object",
+      required: ["challenge_id", "body_json"],
+      properties: {
+        challenge_id: { type: "string", description: "Challenge UUID" },
+        body_json: { type: "object", description: "ProseMirror JSON document" },
+      },
+    },
+    handler: (args) =>
+      postAPI(`/api/groups/challenges/${args.challenge_id}/entries`, {
+        body_json: args.body_json,
+      }),
+  },
+  {
+    name: "group_challenge_entries_list",
+    description:
+      "List entries for a group challenge. While open, only returns the caller's own entry. After closing, returns all entries. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      required: ["challenge_id"],
+      properties: {
+        challenge_id: { type: "string", description: "Challenge UUID" },
+      },
+    },
+    handler: (args) => fetchAPI(`/api/groups/challenges/${args.challenge_id}/entries`),
+  },
+  {
+    name: "group_challenge_vote",
+    description:
+      "Vote for an entry in a closed group challenge with voting enabled. Cannot vote for your own entry. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      required: ["challenge_id", "entry_id"],
+      properties: {
+        challenge_id: { type: "string", description: "Challenge UUID" },
+        entry_id: { type: "string", description: "Entry UUID to vote for" },
+      },
+    },
+    handler: (args) =>
+      postAPI(`/api/groups/challenges/${args.challenge_id}/vote`, {
+        entry_id: args.entry_id,
+      }),
+  },
+  {
+    name: "group_challenge_results",
+    description:
+      "Get results for a closed or archived group challenge, ranked by vote count. No authentication required.",
+    inputSchema: {
+      type: "object",
+      required: ["challenge_id"],
+      properties: {
+        challenge_id: { type: "string", description: "Challenge UUID" },
+      },
+    },
+    handler: (args) => fetchAPI(`/api/groups/challenges/${args.challenge_id}/results`),
+  },
+
+  // ── Group-Scoped Competitions ──
+  {
+    name: "group_competition_create",
+    description:
+      "Create a full writing competition scoped to a group. Only group members may sign up. Requires authentication and group membership.",
+    inputSchema: {
+      type: "object",
+      required: ["group_id", "title", "prompt", "form_constraint", "word_limit", "min_participants"],
+      properties: {
+        group_id: { type: "string", description: "Group UUID" },
+        title: { type: "string", description: "Competition title (max 200 chars)" },
+        prompt: { type: "string", description: "Writing prompt" },
+        form_constraint: { type: "string", description: "poem | short_story | essay | screenplay | any" },
+        word_limit: { type: "integer", description: "Word limit (500–20000)" },
+        min_participants: { type: "integer", description: "Minimum participants to start (>= 5)" },
+        runners_up_count: { type: "integer", description: "Number of runners-up to highlight (default 2)" },
+        signup_duration_days: { type: "integer", description: "Days for signup phase (default 7)" },
+        writing_duration_days: { type: "integer", description: "Days for writing phase (default 14)" },
+        voting_duration_days: { type: "integer", description: "Days for voting phase (default 7)" },
+      },
+    },
+    handler: (args) =>
+      postAPI(`/api/groups/${args.group_id}/competitions`, {
+        title: args.title,
+        prompt: args.prompt,
+        form_constraint: args.form_constraint,
+        word_limit: args.word_limit,
+        min_participants: args.min_participants,
+        runners_up_count: args.runners_up_count,
+        signup_duration_days: args.signup_duration_days,
+        writing_duration_days: args.writing_duration_days,
+        voting_duration_days: args.voting_duration_days,
+      }),
+  },
+  {
+    name: "group_competition_list",
+    description:
+      "List competitions scoped to a group, optionally filtered by phase. No authentication required.",
+    inputSchema: {
+      type: "object",
+      required: ["group_id"],
+      properties: {
+        group_id: { type: "string", description: "Group UUID" },
+        phase: { type: "string", description: "Filter by phase: signup, writing, voting, completed, cancelled" },
+        limit: { type: "integer", description: "Max results (default 50)" },
+      },
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.phase) params.set("phase", args.phase);
+      if (args.limit) params.set("limit", String(args.limit));
+      const qs = params.toString() ? `?${params.toString()}` : "";
+      return fetchAPI(`/api/groups/${args.group_id}/competitions${qs}`);
+    },
+  },
+
   // ── Notifications ──
   {
     name: "list_notifications",
