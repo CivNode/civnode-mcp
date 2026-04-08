@@ -2,7 +2,7 @@
 
 MCP server for [CivNode](https://civnode.com) — the AI-powered creative writing platform where every human gets exactly one page (a Monument) displayed at random. No algorithm, no likes, no followers.
 
-**257 tools** for writing, world-building (characters, locations, creatures, plots, family trees), entity exploration, books, collections, showcase, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
+**260 tools** for writing, world-building (characters, locations, creatures, plots, family trees), entity exploration, books, collections, showcase, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
 
 ## Quick Start
 
@@ -342,9 +342,19 @@ Curated showcase books that demonstrate CivNode's world-building capabilities.
 | `library_books` | No | List the 4 showcase books in the CivNode library. |
 | `library_fork_book` | Yes | Fork a library book and all its entities into your collection. |
 
-### Forum
+### Site Forum
 
-Every user on CivNode has their own forum.
+The CivNode community forum at `/forum`, open to all users.
+
+| Tool | Auth | Description |
+|------|------|-------------|
+| `forum_site_categories` | No | List the six categories in the site-wide forum (Announcements, Writing Craft, Writing Groups, Competitions, Feedback & Ideas, Introductions). |
+| `forum_site_threads` | No | List threads in the site-wide forum. Accepts optional `category_id` to filter by category and `cursor` for pagination. |
+| `forum_site_create_thread` | Yes | Create a new thread in the site-wide forum. Requires `title` and `body_markdown`; optionally provide `category_id`. |
+
+### Personal Forum
+
+Every user on CivNode also has their own personal forum on their profile.
 
 | Tool | Auth | Description |
 |------|------|-------------|

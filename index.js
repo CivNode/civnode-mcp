@@ -659,6 +659,69 @@ const tools = [
     },
   },
 
+  // ── Site Forum ──
+  {
+    name: "forum_site_categories",
+    description:
+      "List all categories in the CivNode site-wide forum. No authentication required.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+    handler: () => fetchAPI(`/api/forum/site/categories`),
+  },
+  {
+    name: "forum_site_threads",
+    description:
+      "List threads in the CivNode site-wide forum. Optionally filter by category. No authentication required.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        category_id: {
+          type: "string",
+          description: "Filter by category UUID (optional)",
+        },
+        cursor: {
+          type: "string",
+          description: "Pagination cursor from a previous response (optional)",
+        },
+      },
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.category_id) params.set("category_id", args.category_id);
+      if (args.cursor) params.set("cursor", args.cursor);
+      const qs = params.toString();
+      return fetchAPI(`/api/forum/site/threads${qs ? "?" + qs : ""}`);
+    },
+  },
+  {
+    name: "forum_site_create_thread",
+    description:
+      "Create a new thread in the CivNode site-wide forum. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Thread title" },
+        body_markdown: {
+          type: "string",
+          description: "Opening post content in Markdown",
+        },
+        category_id: {
+          type: "string",
+          description: "Category UUID to post in",
+        },
+      },
+      required: ["title", "body_markdown"],
+    },
+    handler: (args) =>
+      postAPI(`/api/forum/site/threads`, {
+        title: args.title,
+        body_markdown: args.body_markdown,
+        category_id: args.category_id,
+      }),
+  },
+
   // ── Profiles ──
   {
     name: "get_profile",
