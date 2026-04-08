@@ -400,7 +400,16 @@ Real-time co-writing and draft sharing.
 | `list_groups` | Yes | List groups you belong to. |
 | `get_group` | Yes | Get group details. |
 | `group_settings_get` | Yes | Get feature settings for a group (caller must be a member). Returns submissions_enabled, reciprocity_mode, cycles_enabled, etc. |
-| `group_settings_update` | Yes | Update feature settings for a group (creator only). Pass any subset of: submissions_enabled, reciprocity_mode, silent_period_enabled, cycles_enabled, critique_templates_enabled, goals_enabled, sprints_enabled, challenges_enabled, project_tracking_enabled, directory_listed, member_cap. |
+| `group_settings_update` | Yes | Update feature settings for a group (owner/leader only). Pass any subset of: submissions_enabled, reciprocity_mode, silent_period_enabled, cycles_enabled, critique_templates_enabled, goals_enabled, sprints_enabled, challenges_enabled, project_tracking_enabled, directory_listed, member_cap. |
+| `group_list_members` | Yes | List all group members with roles (owner, leader, moderator, member). |
+| `group_promote_member` | Yes | Promote or demote a member to a new role (leader, moderator, member). Owner can set any role; leaders can promote to moderator only. |
+| `group_transfer_ownership` | Yes | Transfer ownership to another member (owner only). Former owner becomes leader. |
+| `group_warn_member` | Yes | Issue a warning to a member with a required reason. Returns the warning and strike number. Moderators, leaders, and owner can warn. |
+| `group_list_warnings` | Yes | List warnings issued to a specific member. Accessible by moderators, leaders, owner, or the member themselves. |
+| `group_ban_member` | Yes | Ban a member from the group (leaders and owner only). Requires a reason. Member is removed immediately. |
+| `group_unban_member` | Yes | Remove a ban on a user (owner only). |
+| `group_list_bans` | Yes | List all currently banned members (owner and leaders only). |
+| `group_report` | Yes | Report a group or specific member for a rules violation. Any group member can report. |
 | `list_topics` | No | List topic communities. |
 | `join_topic` | Yes | Join a topic. |
 | `leave_topic` | Yes | Leave a topic. |

@@ -1147,6 +1147,140 @@ const tools = [
     },
   },
 
+  // ── Group Moderation ──
+  {
+    name: "group_list_members",
+    description:
+      "List all members of a group with their roles (owner, leader, moderator, member). Caller must be a group member. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.id}/members`),
+  },
+  {
+    name: "group_promote_member",
+    description:
+      "Promote or demote a group member to a new role. Valid roles: leader, moderator, member. The owner can promote to any role; leaders can promote members to moderator only. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        user_id: { type: "string", description: "User UUID of the member to change" },
+        role: { type: "string", enum: ["leader", "moderator", "member"], description: "New role to assign" },
+      },
+      required: ["id", "user_id", "role"],
+    },
+    handler: (args) => putAPI(`/api/groups/${args.id}/members/${args.user_id}/role`, { role: args.role }),
+  },
+  {
+    name: "group_transfer_ownership",
+    description:
+      "Transfer group ownership to another member. Only the current owner can call this. The previous owner becomes a leader. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        user_id: { type: "string", description: "User UUID of the member to become owner" },
+      },
+      required: ["id", "user_id"],
+    },
+    handler: (args) => postAPI(`/api/groups/${args.id}/transfer`, { user_id: args.user_id }),
+  },
+  {
+    name: "group_warn_member",
+    description:
+      "Issue a warning to a group member. A reason is required. Returns the warning object including the strike number. Moderators, leaders, and the owner can warn members. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        user_id: { type: "string", description: "User UUID of the member to warn" },
+        reason: { type: "string", description: "Reason for the warning" },
+      },
+      required: ["id", "user_id", "reason"],
+    },
+    handler: (args) => postAPI(`/api/groups/${args.id}/members/${args.user_id}/warn`, { reason: args.reason }),
+  },
+  {
+    name: "group_list_warnings",
+    description:
+      "List warnings issued to a specific member. Accessible by moderators, leaders, and the owner, or by the member themselves. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        user_id: { type: "string", description: "User UUID of the member" },
+      },
+      required: ["id", "user_id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.id}/members/${args.user_id}/warnings`),
+  },
+  {
+    name: "group_ban_member",
+    description:
+      "Ban a member from a group. The member is removed immediately and cannot rejoin unless unbanned. A reason is required. Leaders and the owner can ban. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        user_id: { type: "string", description: "User UUID of the member to ban" },
+        reason: { type: "string", description: "Reason for the ban" },
+      },
+      required: ["id", "user_id", "reason"],
+    },
+    handler: (args) => postAPI(`/api/groups/${args.id}/members/${args.user_id}/ban`, { reason: args.reason }),
+  },
+  {
+    name: "group_unban_member",
+    description:
+      "Remove a ban on a user, allowing them to rejoin the group. Only the owner can unban. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        user_id: { type: "string", description: "User UUID of the banned member" },
+      },
+      required: ["id", "user_id"],
+    },
+    handler: (args) => deleteAPI(`/api/groups/${args.id}/bans/${args.user_id}`),
+  },
+  {
+    name: "group_list_bans",
+    description:
+      "List all currently banned members of a group. Only accessible by the owner and leaders. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.id}/bans`),
+  },
+  {
+    name: "group_report",
+    description:
+      "Report a group or a specific member for a rules violation. Any group member can submit a report. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        reason: { type: "string", description: "Description of the issue" },
+        target_user_id: { type: "string", description: "Optional: UUID of the specific member being reported" },
+      },
+      required: ["id", "reason"],
+    },
+    handler: (args) => {
+      const body = { reason: args.reason };
+      if (args.target_user_id) body.target_user_id = args.target_user_id;
+      return postAPI(`/api/groups/${args.id}/report`, body);
+    },
+  },
+
   // ── Notifications ──
   {
     name: "list_notifications",
