@@ -1571,6 +1571,201 @@ const tools = [
     handler: (args) => deleteAPI(`/api/groups/templates/${args.id}`),
   },
 
+  // ── Sprints ──
+  {
+    name: "sprint_list",
+    description:
+      "List all active (non-completed) sprint rooms. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/sprints"),
+  },
+  {
+    name: "sprint_create",
+    description:
+      "Create a new sprint room. Optionally link to a group and set a scheduled start time. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Sprint room name" },
+        duration_minutes: { type: "integer", description: "Duration in minutes (default 25)" },
+        group_id: { type: "string", description: "Group UUID to link this sprint to (optional)" },
+        scheduled_start: { type: "string", description: "ISO 8601 start time (optional)" },
+      },
+    },
+    handler: (args) => postAPI("/api/sprints", args),
+  },
+  {
+    name: "sprint_get",
+    description:
+      "Get a sprint room by UUID, including all participants. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Sprint UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/sprints/${args.id}`),
+  },
+  {
+    name: "sprint_join",
+    description:
+      "Join a sprint room with your starting word count. Optionally specify a work to write on. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Sprint UUID" },
+        words_start: { type: "integer", description: "Word count when joining" },
+        work_id: { type: "string", description: "Work UUID to write on (optional)" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/sprints/${args.id}/join`, { words_start: args.words_start || 0, work_id: args.work_id }),
+  },
+  {
+    name: "sprint_start",
+    description:
+      "Start a sprint room (host only). Sets the room to active and broadcasts the timer start. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Sprint UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/sprints/${args.id}/start`, {}),
+  },
+  {
+    name: "sprint_end",
+    description:
+      "End an active sprint and get ranked results. Words written is calculated as (words_end - words_start) for each participant. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Sprint UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/sprints/${args.id}/end`, {}),
+  },
+  {
+    name: "sprint_progress",
+    description:
+      "Report current word count during an active sprint. Broadcasts the update to all participants in real time. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Sprint UUID" },
+        words_end: { type: "integer", description: "Current word count" },
+      },
+      required: ["id", "words_end"],
+    },
+    handler: (args) => postAPI(`/api/sprints/${args.id}/progress`, { words_end: args.words_end }),
+  },
+  {
+    name: "group_sprint_schedule",
+    description:
+      "Schedule a sprint for a writing group. The caller must be a group member. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        group_id: { type: "string", description: "Group UUID" },
+        name: { type: "string", description: "Sprint name" },
+        duration_minutes: { type: "integer", description: "Duration in minutes (default 25)" },
+        scheduled_start: { type: "string", description: "ISO 8601 start time (optional)" },
+      },
+      required: ["group_id"],
+    },
+    handler: (args) => {
+      const { group_id, ...body } = args;
+      return postAPI(`/api/groups/${group_id}/sprints`, body);
+    },
+  },
+  {
+    name: "group_sprint_list",
+    description:
+      "List all sprint rooms for a group, most recent first. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        group_id: { type: "string", description: "Group UUID" },
+      },
+      required: ["group_id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.group_id}/sprints`),
+  },
+
+  // ── Writing Stats & Goals ──
+  {
+    name: "writing_stats",
+    description:
+      "Get daily writing statistics for the current user over a date range. Returns total words, sprint counts, and a day-by-day breakdown with streak info. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        from: { type: "string", description: "Start date YYYY-MM-DD (default: 30 days ago)" },
+        to: { type: "string", description: "End date YYYY-MM-DD (default: today)" },
+      },
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.from) params.set("from", args.from);
+      if (args.to) params.set("to", args.to);
+      return fetchAPI(`/api/writing/stats?${params}`);
+    },
+  },
+  {
+    name: "writing_goal_set",
+    description:
+      "Set a writing goal (daily, weekly, or project). Optionally link to a group. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        goal_type: { type: "string", description: "daily, weekly, or project" },
+        target_words: { type: "integer", description: "Target word count" },
+        start_date: { type: "string", description: "Start date YYYY-MM-DD (default: today)" },
+        end_date: { type: "string", description: "End date YYYY-MM-DD (optional)" },
+        group_id: { type: "string", description: "Group UUID (optional)" },
+      },
+      required: ["target_words"],
+    },
+    handler: (args) => postAPI("/api/writing/goals", args),
+  },
+  {
+    name: "writing_goals",
+    description:
+      "List all writing goals for the current user. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/writing/goals"),
+  },
+  {
+    name: "writing_streak",
+    description:
+      "Get the current and best writing streak for the current user. Requires authentication.",
+    inputSchema: { type: "object", properties: {} },
+    handler: () => fetchAPI("/api/writing/streak"),
+  },
+  {
+    name: "group_writing_stats",
+    description:
+      "Get combined writing stats for all members of a group over a date range. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        group_id: { type: "string", description: "Group UUID" },
+        from: { type: "string", description: "Start date YYYY-MM-DD (default: 30 days ago)" },
+        to: { type: "string", description: "End date YYYY-MM-DD (default: today)" },
+      },
+      required: ["group_id"],
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.from) params.set("from", args.from);
+      if (args.to) params.set("to", args.to);
+      return fetchAPI(`/api/groups/${args.group_id}/writing-stats?${params}`);
+    },
+  },
+
   // ── Notifications ──
   {
     name: "list_notifications",
