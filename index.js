@@ -1106,6 +1106,46 @@ const tools = [
     },
     handler: (args) => fetchAPI(`/api/groups/${args.id}`),
   },
+  {
+    name: "group_settings_get",
+    description:
+      "Get the feature settings for a specific group. Caller must be a member. Returns settings such as submissions_enabled, reciprocity_mode, cycles_enabled, etc. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.id}/settings`),
+  },
+  {
+    name: "group_settings_update",
+    description:
+      "Update the feature settings for a group. Only the group creator can update settings. Accepts any subset of settings keys. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        submissions_enabled: { type: "boolean", description: "Enable work submissions" },
+        reciprocity_mode: { type: "string", enum: ["enforced", "visible", "none"], description: "Feedback balance tracking mode" },
+        silent_period_enabled: { type: "boolean", description: "Silent reading period before discussion" },
+        cycles_enabled: { type: "boolean", description: "Structured critique cycles" },
+        critique_templates_enabled: { type: "boolean", description: "Guided feedback form templates" },
+        goals_enabled: { type: "boolean", description: "Personal writing goal tracking" },
+        sprints_enabled: { type: "boolean", description: "Timed writing sprints" },
+        challenges_enabled: { type: "boolean", description: "Group writing challenges" },
+        project_tracking_enabled: { type: "boolean", description: "Shared project/chapter tracking board" },
+        directory_listed: { type: "boolean", description: "Show group in public directory" },
+        member_cap: { type: "integer", description: "Maximum number of members (2-100)" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => {
+      const { id, ...settings } = args;
+      return putAPI(`/api/groups/${id}/settings`, settings);
+    },
+  },
 
   // ── Notifications ──
   {

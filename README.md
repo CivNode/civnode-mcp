@@ -399,6 +399,8 @@ Real-time co-writing and draft sharing.
 |------|------|-------------|
 | `list_groups` | Yes | List groups you belong to. |
 | `get_group` | Yes | Get group details. |
+| `group_settings_get` | Yes | Get feature settings for a group (caller must be a member). Returns submissions_enabled, reciprocity_mode, cycles_enabled, etc. |
+| `group_settings_update` | Yes | Update feature settings for a group (creator only). Pass any subset of: submissions_enabled, reciprocity_mode, silent_period_enabled, cycles_enabled, critique_templates_enabled, goals_enabled, sprints_enabled, challenges_enabled, project_tracking_enabled, directory_listed, member_cap. |
 | `list_topics` | No | List topic communities. |
 | `join_topic` | Yes | Join a topic. |
 | `leave_topic` | Yes | Leave a topic. |
