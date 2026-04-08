@@ -1382,6 +1382,195 @@ const tools = [
     }),
   },
 
+  // ── Group critique cycles ──
+  {
+    name: "group_start_cycle",
+    description:
+      "Start a new critique cycle for a group. The caller must be the owner or a leader. Returns the new cycle object including its ID, cycle number, phase timestamps, and status. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/groups/${args.id}/cycles`, {}),
+  },
+  {
+    name: "group_list_cycles",
+    description:
+      "List all critique cycles for a group, most recent first. The caller must be a member. Returns cycle objects with phase timestamps and current status. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.id}/cycles`),
+  },
+  {
+    name: "group_current_cycle",
+    description:
+      "Get the current (most recent non-completed) critique cycle for a group. Returns 404 if no active cycle. The caller must be a member. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.id}/cycles/current`),
+  },
+  {
+    name: "group_submit_work",
+    description:
+      "Submit work to the current critique cycle. The group must be in the submission phase. Each member may submit once per cycle. Returns the submission object. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        title: { type: "string", description: "Submission title" },
+        body_json: { type: "object", description: "ProseMirror document JSON" },
+        word_count: { type: "integer", description: "Word count of the submission" },
+        work_id: { type: "string", description: "Optional: UUID of a linked work in the user's library" },
+        chapter_id: { type: "string", description: "Optional: UUID of a linked chapter" },
+      },
+      required: ["id", "title"],
+    },
+    handler: (args) => postAPI(`/api/groups/${args.id}/submissions`, {
+      title: args.title,
+      body_json: args.body_json || { type: "doc", content: [] },
+      word_count: args.word_count || 0,
+      work_id: args.work_id,
+      chapter_id: args.chapter_id,
+    }),
+  },
+  {
+    name: "group_list_cycle_submissions",
+    description:
+      "List all submissions for a specific cycle. The caller must be a member. Returns submission objects including title, author alias, word count, and body JSON. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        cycle_id: { type: "string", description: "Cycle UUID" },
+      },
+      required: ["id", "cycle_id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.id}/cycles/${args.cycle_id}/submissions`),
+  },
+  {
+    name: "group_get_submission",
+    description:
+      "Get a single submission by its UUID. The caller must be a member of the group the submission belongs to. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Submission UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/submissions/${args.id}`),
+  },
+  {
+    name: "group_record_critique",
+    description:
+      "Record a critique against a submission. The group must be in the critique phase. The critic cannot be the submission author. Returns the critique object. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Submission UUID" },
+        inline_comment_count: { type: "integer", description: "Number of inline comments left on the text" },
+        total_comment_words: { type: "integer", description: "Total word count of all critique text" },
+        template_responses: { type: "object", description: "Optional: answers keyed by template question ID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => postAPI(`/api/groups/submissions/${args.id}/critique`, {
+      inline_comment_count: args.inline_comment_count || 0,
+      total_comment_words: args.total_comment_words || 0,
+      template_responses: args.template_responses || {},
+    }),
+  },
+  {
+    name: "group_rate_critique",
+    description:
+      "Rate a critique 1–5 for helpfulness. Only the submission author can rate. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Critique UUID" },
+        rating: { type: "integer", minimum: 1, maximum: 5, description: "Helpfulness rating 1–5" },
+      },
+      required: ["id", "rating"],
+    },
+    handler: (args) => postAPI(`/api/groups/critiques/${args.id}/rate`, { rating: args.rating }),
+  },
+  {
+    name: "group_reciprocity",
+    description:
+      "Get the reciprocity table for the current cycle: each member's submission count, critiques given, critiques received, and whether they met the threshold. The caller must be a member. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.id}/reciprocity`),
+  },
+  {
+    name: "group_list_templates",
+    description:
+      "List critique templates for a group. If no templates have been created yet, two presets (Fiction Critique, Poetry Critique) are seeded automatically. The caller must be a member. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.id}/templates`),
+  },
+  {
+    name: "group_create_template",
+    description:
+      "Create a critique template with a name and a list of questions. Each question has an id, label, and prompt. The caller must be an owner or leader. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        name: { type: "string", description: "Template name" },
+        questions: {
+          type: "array",
+          description: "Array of question objects, each with id, label, and prompt fields",
+          items: { type: "object" },
+        },
+        is_default: { type: "boolean", description: "Whether this is the default template shown to critics" },
+      },
+      required: ["id", "name", "questions"],
+    },
+    handler: (args) => postAPI(`/api/groups/${args.id}/templates`, {
+      name: args.name,
+      questions: args.questions,
+      is_default: args.is_default || false,
+    }),
+  },
+  {
+    name: "group_delete_template",
+    description:
+      "Delete a critique template by UUID. The caller must be an owner or leader of the group the template belongs to. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Template UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => deleteAPI(`/api/groups/templates/${args.id}`),
+  },
+
   // ── Notifications ──
   {
     name: "list_notifications",
