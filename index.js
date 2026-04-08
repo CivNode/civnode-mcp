@@ -1094,6 +1094,43 @@ const tools = [
     handler: () => fetchAPI("/api/groups"),
   },
   {
+    name: "create_group",
+    description:
+      "Create a new writing group. The caller becomes the owner. Group types: critique (structured cycles), accountability (goals and check-ins), workshop (open critique), co_writing (shared projects), sprint (timed sessions). Defaults to critique. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Group name (required)" },
+        description: { type: "string", description: "Short description of the group" },
+        group_type: {
+          type: "string",
+          enum: ["critique", "accountability", "workshop", "co_writing", "sprint"],
+          description: "Type of writing group. Defaults to critique.",
+        },
+      },
+      required: ["name"],
+    },
+    handler: (args) =>
+      postAPI("/api/groups", {
+        name: args.name,
+        description: args.description,
+        group_type: args.group_type,
+      }),
+  },
+  {
+    name: "delete_group",
+    description:
+      "Delete a writing group. Only the owner may delete a group. This permanently removes the group, all cycles, submissions, critiques, and chat rooms. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID (required)" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => deleteAPI(`/api/groups/${args.id}`),
+  },
+  {
     name: "get_group",
     description:
       "Get details for a specific group. Requires authentication.",
@@ -1105,6 +1142,21 @@ const tools = [
       required: ["id"],
     },
     handler: (args) => fetchAPI(`/api/groups/${args.id}`),
+  },
+  {
+    name: "group_update",
+    description:
+      "Update a group's name and description. Only the owner and leaders may update group details. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID (required)" },
+        name: { type: "string", description: "New group name" },
+        description: { type: "string", description: "New group description" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => putAPI(`/api/groups/${args.id}`, { name: args.name, description: args.description }),
   },
   {
     name: "group_settings_get",
@@ -1148,6 +1200,34 @@ const tools = [
   },
 
   // ── Group Moderation ──
+  {
+    name: "group_add_member",
+    description:
+      "Add a user to a group by user_id. Only the owner and leaders may add members directly. For public groups with directory listing enabled, users can also apply via group_apply. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID (required)" },
+        user_id: { type: "string", description: "User UUID to add (required)" },
+      },
+      required: ["id", "user_id"],
+    },
+    handler: (args) => postAPI(`/api/groups/${args.id}/members`, { user_id: args.user_id }),
+  },
+  {
+    name: "group_remove_member",
+    description:
+      "Remove a member from a group. The owner and leaders may remove any non-owner member. Members may remove themselves (leave). Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID (required)" },
+        user_id: { type: "string", description: "User UUID to remove (required)" },
+      },
+      required: ["id", "user_id"],
+    },
+    handler: (args) => deleteAPI(`/api/groups/${args.id}/members/${args.user_id}`),
+  },
   {
     name: "group_list_members",
     description:
@@ -2069,6 +2149,141 @@ const tools = [
       },
     },
     handler: (args) => fetchAPI(`/api/groups/challenges/${args.challenge_id}/results`),
+  },
+
+  // ── Group Project Tracking ──
+  {
+    name: "group_project_register",
+    description:
+      "Register a new project for a group member. The caller must be a group member and must not already have an active (non-complete) project in this group. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      required: ["group_id", "title"],
+      properties: {
+        group_id: { type: "string", description: "Group UUID" },
+        title: { type: "string", description: "Project title" },
+        description: { type: "string", description: "Short description of the project" },
+        genre: { type: "string", description: "Genre (e.g. Fantasy, Literary Fiction)" },
+        work_id: { type: "string", description: "Optional UUID of an existing work to link" },
+        target_words: { type: "integer", description: "Optional target word count" },
+      },
+    },
+    handler: (args) =>
+      postAPI(`/api/groups/${args.group_id}/projects`, {
+        title: args.title,
+        description: args.description,
+        genre: args.genre,
+        work_id: args.work_id,
+        target_words: args.target_words,
+      }),
+  },
+  {
+    name: "group_project_list",
+    description:
+      "List all projects for a group. Active projects appear before completed ones. No authentication required.",
+    inputSchema: {
+      type: "object",
+      required: ["group_id"],
+      properties: {
+        group_id: { type: "string", description: "Group UUID" },
+      },
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.group_id}/projects`),
+  },
+  {
+    name: "group_project_get",
+    description:
+      "Get a single project by ID, including its milestones. No authentication required.",
+    inputSchema: {
+      type: "object",
+      required: ["project_id"],
+      properties: {
+        project_id: { type: "string", description: "Project UUID" },
+      },
+    },
+    handler: (args) => fetchAPI(`/api/groups/projects/${args.project_id}`),
+  },
+  {
+    name: "group_project_update",
+    description:
+      "Update a project's title, description, genre, target word count, or current word count. Only the project owner may update. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      required: ["project_id", "title"],
+      properties: {
+        project_id: { type: "string", description: "Project UUID" },
+        title: { type: "string", description: "Project title" },
+        description: { type: "string", description: "Short description" },
+        genre: { type: "string", description: "Genre" },
+        work_id: { type: "string", description: "UUID of linked work (or null to unlink)" },
+        target_words: { type: "integer", description: "Target word count" },
+        current_words: { type: "integer", description: "Current word count" },
+      },
+    },
+    handler: (args) =>
+      putAPI(`/api/groups/projects/${args.project_id}`, {
+        title: args.title,
+        description: args.description,
+        genre: args.genre,
+        work_id: args.work_id,
+        target_words: args.target_words,
+        current_words: args.current_words,
+      }),
+  },
+  {
+    name: "group_project_update_stage",
+    description:
+      "Advance a project to a new stage (drafting | revising | polishing | complete). Only the project owner may change the stage. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      required: ["project_id", "stage"],
+      properties: {
+        project_id: { type: "string", description: "Project UUID" },
+        stage: {
+          type: "string",
+          enum: ["drafting", "revising", "polishing", "complete"],
+          description: "New stage",
+        },
+      },
+    },
+    handler: (args) =>
+      putAPI(`/api/groups/projects/${args.project_id}/stage`, { stage: args.stage }),
+  },
+  {
+    name: "group_project_milestone_create",
+    description:
+      "Log a milestone reached on a project. Only the project owner may create milestones. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      required: ["project_id", "title"],
+      properties: {
+        project_id: { type: "string", description: "Project UUID" },
+        title: { type: "string", description: "Milestone title (e.g. 'First chapter done')" },
+        milestone_type: {
+          type: "string",
+          enum: ["first_draft", "revision", "chapter_target", "word_target", "custom"],
+          description: "Type of milestone (default: custom)",
+        },
+      },
+    },
+    handler: (args) =>
+      postAPI(`/api/groups/projects/${args.project_id}/milestones`, {
+        title: args.title,
+        milestone_type: args.milestone_type || "custom",
+      }),
+  },
+  {
+    name: "group_project_milestones_list",
+    description:
+      "List all milestones for a project in chronological order. No authentication required.",
+    inputSchema: {
+      type: "object",
+      required: ["project_id"],
+      properties: {
+        project_id: { type: "string", description: "Project UUID" },
+      },
+    },
+    handler: (args) => fetchAPI(`/api/groups/projects/${args.project_id}/milestones`),
   },
 
   // ── Group-Scoped Competitions ──

@@ -398,9 +398,14 @@ Real-time co-writing and draft sharing.
 | Tool | Auth | Description |
 |------|------|-------------|
 | `list_groups` | Yes | List groups you belong to. |
+| `create_group` | Yes | Create a new writing group. Types: critique, accountability, workshop, co_writing, sprint. Caller becomes owner. |
 | `get_group` | Yes | Get group details. |
+| `group_update` | Yes | Update a group's name and description (owner/leader only). |
+| `delete_group` | Yes | Delete a group permanently (owner only). Removes all cycles, submissions, and rooms. |
 | `group_settings_get` | Yes | Get feature settings for a group (caller must be a member). Returns submissions_enabled, reciprocity_mode, cycles_enabled, etc. |
 | `group_settings_update` | Yes | Update feature settings for a group (owner/leader only). Pass any subset of: submissions_enabled, reciprocity_mode, silent_period_enabled, cycles_enabled, critique_templates_enabled, goals_enabled, sprints_enabled, challenges_enabled, project_tracking_enabled, directory_listed, member_cap. |
+| `group_add_member` | Yes | Add a user to a group by user_id (owner/leader only). |
+| `group_remove_member` | Yes | Remove a member from a group. Owner/leaders can remove anyone; members can remove themselves. |
 | `group_list_members` | Yes | List all group members with roles (owner, leader, moderator, member). |
 | `group_promote_member` | Yes | Promote or demote a member to a new role (leader, moderator, member). Owner can set any role; leaders can promote to moderator only. |
 | `group_transfer_ownership` | Yes | Transfer ownership to another member (owner only). Former owner becomes leader. |
