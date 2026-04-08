@@ -1280,6 +1280,107 @@ const tools = [
       return postAPI(`/api/groups/${args.id}/report`, body);
     },
   },
+  {
+    name: "group_list_rooms",
+    description:
+      "List all messaging rooms (sub-channels) in a group. The caller must be a group member. Rooms include General, Submissions, and Off-topic by default. Each room has a conversation_id used for sending and reading messages. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/groups/${args.id}/rooms`),
+  },
+  {
+    name: "group_create_room",
+    description:
+      "Create a custom messaging room in a group. Only owners and leaders may create rooms. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        name: { type: "string", description: "Room name (e.g. 'Feedback')" },
+      },
+      required: ["id", "name"],
+    },
+    handler: (args) => postAPI(`/api/groups/${args.id}/rooms`, { name: args.name }),
+  },
+  {
+    name: "group_delete_room",
+    description:
+      "Delete a custom room from a group. Only owners and leaders may delete rooms. The General room cannot be deleted. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        room_id: { type: "string", description: "Room UUID" },
+      },
+      required: ["id", "room_id"],
+    },
+    handler: (args) => deleteAPI(`/api/groups/${args.id}/rooms/${args.room_id}`),
+  },
+  {
+    name: "group_activity",
+    description:
+      "Fetch the activity feed for a group. Returns a chronological list of events: submissions, critiques, members joining/leaving, role changes, sprints, and cycle events. Supports pagination via limit and offset. The caller must be a group member. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        limit: { type: "number", description: "Max events to return (default 20, max 50)" },
+        offset: { type: "number", description: "Pagination offset (default 0)" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.limit) params.set("limit", args.limit);
+      if (args.offset) params.set("offset", args.offset);
+      const qs = params.toString();
+      return fetchAPI(`/api/groups/${args.id}/activity${qs ? "?" + qs : ""}`);
+    },
+  },
+  {
+    name: "group_forum_threads",
+    description:
+      "List forum threads in a group's private forum. Threads are visible to all group members. Returns title, author, reply count, and timestamps. Supports cursor-based pagination. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        limit: { type: "number", description: "Max threads to return (default 20, max 20)" },
+        cursor: { type: "string", description: "ISO 8601 timestamp for cursor-based pagination" },
+      },
+      required: ["id"],
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.limit) params.set("limit", args.limit);
+      if (args.cursor) params.set("cursor", args.cursor);
+      const qs = params.toString();
+      return fetchAPI(`/api/groups/${args.id}/forum/threads${qs ? "?" + qs : ""}`);
+    },
+  },
+  {
+    name: "group_forum_create_thread",
+    description:
+      "Create a new thread in a group's private forum. The caller must be a group member. Returns the created thread including its ID, which can be used to navigate to /forum/{id}. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Group UUID" },
+        title: { type: "string", description: "Thread title" },
+        body_markdown: { type: "string", description: "Opening post body (Markdown)" },
+      },
+      required: ["id", "title"],
+    },
+    handler: (args) => postAPI(`/api/groups/${args.id}/forum/threads`, {
+      title: args.title,
+      body_markdown: args.body_markdown || "",
+    }),
+  },
 
   // ── Notifications ──
   {
