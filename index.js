@@ -3867,8 +3867,16 @@ const tools = [
         pov_character: { type: "string" },
         notes: { type: "string" },
         region_id: {
-          type: "string",
+          type: ["string", "null"],
           description: "Location region UUID, or null to clear.",
+        },
+        area_id: {
+          type: ["string", "null"],
+          description: "Location area UUID (within a region), or null to clear.",
+        },
+        spot_id: {
+          type: ["string", "null"],
+          description: "Location spot UUID (within an area), or null to clear.",
         },
         act_id: {
           type: "string",
