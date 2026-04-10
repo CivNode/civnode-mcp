@@ -186,6 +186,7 @@ Structured plot outlines with acts, scenes, beats, and AI generation.
 | `plot_add_act` | Yes | Add an act (title, summary, purpose, notes). |
 | `plot_ai_acts` | Yes | Generate acts using AI. |
 | `plot_add_scene` | Yes | Add a scene to an act. |
+| `update_plot_scene` | Yes | Update a scene's text fields (title, summary, purpose, style_hint, pov_character, notes), location bindings (region_id, area_id, spot_id — pass `null` to clear), or move it between acts in the same plot by passing `act_id` (optionally with `sort_order` to position it in the new act). |
 | `plot_ai_scenes` | Yes | Generate scenes for an act using AI. |
 | `plot_ai_image` | Yes | Generate an AI image for the plot. |
 | `plot_publish` | Yes | Publish to the marketplace. |
@@ -234,7 +235,7 @@ Full book management — create books with chapters, link compendium entities, e
 | `delete_book` | Yes | Delete a book and all chapters. |
 | `list_chapters` | Yes | List chapters in a book. |
 | `get_chapter` | Yes | Get a chapter's content and metadata. |
-| `create_chapter` | Yes | Create a chapter (title and chapter_type required). Types: chapter, prologue, epilogue, interlude, appendix. |
+| `create_chapter` | Yes | Create a chapter (title and chapter_type required). Types: chapter, prologue, epilogue, interlude, appendix. Optional `plot_scene_id` links the new chapter to a plot scene you own (silently skipped if the scene isn't on one of your plots) — powers the Plot Canvas drawer's "Create chapter from this scene" button. |
 | `update_chapter` | Yes | Update chapter content or metadata. |
 | `delete_chapter` | Yes | Delete a chapter. |
 | `reorder_chapters` | Yes | Reorder chapters (pass chapter IDs in desired order). |
@@ -584,6 +585,38 @@ library_books()
 ```javascript
 library_fork_book({
   book_id: "book-uuid-here"
+})
+```
+
+### Create a Chapter Linked to a Plot Scene
+
+```javascript
+create_chapter({
+  book_id: "book-uuid-here",
+  title: "The Crossing",
+  chapter_type: "chapter",
+  plot_scene_id: "scene-uuid-here"
+})
+```
+
+### Move a Plot Scene Between Acts
+
+```javascript
+update_plot_scene({
+  plot_id: "plot-uuid-here",
+  scene_id: "scene-uuid-here",
+  act_id: "target-act-uuid",
+  sort_order: 2
+})
+```
+
+### Edit a Plot Scene's Summary
+
+```javascript
+update_plot_scene({
+  plot_id: "plot-uuid-here",
+  scene_id: "scene-uuid-here",
+  summary: "Elena arrives at the lighthouse"
 })
 ```
 
