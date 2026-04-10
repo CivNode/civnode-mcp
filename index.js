@@ -3895,6 +3895,111 @@ const tools = [
     },
   },
   {
+    name: "get_plot_template",
+    description:
+      "Get a single plot template with full beat details (acts → beats → name + hint). Use with the structure overlay workflow or to inspect a template before applying it. The list_plot_templates tool returns summary-only data.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "Template ID (e.g. 'three-act', 'save-the-cat', 'hero-journey', 'kishotenketsu'). Use list_plot_templates for the full set.",
+        },
+      },
+      required: ["id"],
+    },
+    handler: (args) => fetchAPI(`/api/plot-templates/${args.id}`),
+  },
+  {
+    name: "create_plot_beat",
+    description:
+      "Create a beat under a scene in a plot. Beats are the third level of the Plot Canvas — each beat is an editorial moment inside a scene (e.g. a dialogue exchange, a reveal, an internal shift). sort_order is auto-assigned at the end of the scene's existing beats. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        plot_id: { type: "string", description: "Plot UUID" },
+        scene_id: { type: "string", description: "Scene UUID (must belong to the plot)" },
+        title: { type: "string", description: "Beat title (required)" },
+        description: { type: "string", description: "Beat description / editorial notes" },
+        beat_type: { type: "string", description: "Optional type tag (e.g. 'action', 'dialogue', 'internal', 'reveal')" },
+        notes: { type: "string", description: "Freeform notes" },
+        region_id: { type: ["string", "null"], description: "Location region UUID, or null to leave unset" },
+        area_id: { type: ["string", "null"], description: "Location area UUID, or null" },
+        spot_id: { type: ["string", "null"], description: "Location spot UUID, or null" },
+      },
+      required: ["plot_id", "scene_id", "title"],
+    },
+    handler: (args) => {
+      const { plot_id, scene_id, ...body } = args;
+      return postAPI(`/api/plots/${plot_id}/scenes/${scene_id}/beats`, body);
+    },
+  },
+  {
+    name: "update_plot_beat",
+    description:
+      "Update fields on an existing plot beat. Pass only the fields you want to change. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        plot_id: { type: "string", description: "Plot UUID" },
+        beat_id: { type: "string", description: "Beat UUID" },
+        title: { type: "string" },
+        description: { type: "string" },
+        beat_type: { type: "string" },
+        notes: { type: "string" },
+        region_id: { type: ["string", "null"], description: "Location region UUID, or null to clear" },
+        area_id: { type: ["string", "null"], description: "Location area UUID, or null to clear" },
+        spot_id: { type: ["string", "null"], description: "Location spot UUID, or null to clear" },
+      },
+      required: ["plot_id", "beat_id"],
+    },
+    handler: (args) => {
+      const { plot_id, beat_id, ...rest } = args;
+      return putAPI(`/api/plots/${plot_id}/beats/${beat_id}`, rest);
+    },
+  },
+  {
+    name: "delete_plot_beat",
+    description: "Delete a plot beat by UUID. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        plot_id: { type: "string", description: "Plot UUID" },
+        beat_id: { type: "string", description: "Beat UUID" },
+      },
+      required: ["plot_id", "beat_id"],
+    },
+    handler: (args) => deleteAPI(`/api/plots/${args.plot_id}/beats/${args.beat_id}`),
+  },
+  {
+    name: "reorder_plot_beats",
+    description:
+      "Reorder beats within a scene. Pass a list of {id, sort_order} objects — typically the full current beat list with their new sort orders. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        plot_id: { type: "string", description: "Plot UUID" },
+        scene_id: { type: "string", description: "Scene UUID (must belong to the plot)" },
+        items: {
+          type: "array",
+          description: "Ordered list of beats with their target sort_order",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string", description: "Beat UUID" },
+              sort_order: { type: "integer", description: "Target ordinal position" },
+            },
+            required: ["id", "sort_order"],
+          },
+        },
+      },
+      required: ["plot_id", "scene_id", "items"],
+    },
+    handler: (args) => {
+      return putAPI(`/api/plots/${args.plot_id}/scenes/${args.scene_id}/beats/reorder`, args.items);
+    },
+  },
+  {
     name: "delete_book_plot",
     description: "Delete the plot linked to a book. Requires authentication.",
     inputSchema: {
