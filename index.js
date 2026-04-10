@@ -3852,6 +3852,41 @@ const tools = [
     handler: (args) => postAPI(`/api/books/${args.book_id}/plot/from-template`, { template_id: args.template_id }),
   },
   {
+    name: "update_plot_scene",
+    description:
+      "Update fields on a plot scene. Pass only the fields you want to change. To move the scene to a different act in the same plot, pass act_id (and optionally sort_order). Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        plot_id: { type: "string", description: "Plot UUID" },
+        scene_id: { type: "string", description: "Scene UUID" },
+        title: { type: "string" },
+        summary: { type: "string" },
+        purpose: { type: "string" },
+        style_hint: { type: "string" },
+        pov_character: { type: "string" },
+        notes: { type: "string" },
+        region_id: {
+          type: "string",
+          description: "Location region UUID, or null to clear.",
+        },
+        act_id: {
+          type: "string",
+          description: "Move the scene to a different act in the same plot. Target act must belong to the same plot.",
+        },
+        sort_order: {
+          type: "integer",
+          description: "New ordinal position within the (possibly new) act.",
+        },
+      },
+      required: ["plot_id", "scene_id"],
+    },
+    handler: (args) => {
+      const { plot_id, scene_id, ...rest } = args;
+      return putAPI(`/api/plots/${plot_id}/scenes/${scene_id}`, rest);
+    },
+  },
+  {
     name: "delete_book_plot",
     description: "Delete the plot linked to a book. Requires authentication.",
     inputSchema: {
@@ -4167,7 +4202,8 @@ const tools = [
   },
   {
     name: "create_chapter",
-    description: "Create a new chapter in a book. Requires authentication.",
+    description:
+      "Create a new chapter in a book. If plot_scene_id is provided, the chapter is linked to that plot scene (the scene must belong to a plot you own). Requires authentication.",
     inputSchema: {
       type: "object",
       properties: {
@@ -4177,14 +4213,18 @@ const tools = [
           type: "string",
           description: "Type: chapter, prologue, epilogue, interlude, appendix (required)",
         },
+        plot_scene_id: {
+          type: "string",
+          description: "Optional: link the new chapter to this plot scene UUID. Used by the Plot Canvas 'Create chapter from this scene' flow.",
+        },
       },
       required: ["book_id", "title", "chapter_type"],
     },
-    handler: (args) =>
-      postAPI(`/api/books/${args.book_id}/chapters`, {
-        title: args.title,
-        chapter_type: args.chapter_type,
-      }),
+    handler: (args) => {
+      const body = { title: args.title, chapter_type: args.chapter_type };
+      if (args.plot_scene_id) body.plot_scene_id = args.plot_scene_id;
+      return postAPI(`/api/books/${args.book_id}/chapters`, body);
+    },
   },
   {
     name: "update_chapter",
