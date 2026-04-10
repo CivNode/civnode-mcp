@@ -200,9 +200,14 @@ Tools for the dedicated Plot Designer screen at `/books/{bookId}/plot`.
 | Tool | Auth | Description |
 |------|------|-------------|
 | `list_plot_templates` | No | List available plot structure templates (Three-Act, Hero's Journey, etc.). |
+| `get_plot_template` | Yes | Get a single plot template with full beat details (acts → beats → name + hint). |
 | `get_book_plot` | Yes | Get the plot linked to a book with all acts, scenes, and beats. |
 | `create_book_plot_from_template` | Yes | Create a plot from a template and link to a book. |
 | `delete_book_plot` | Yes | Delete the plot linked to a book. |
+| `create_plot_beat` | Yes | Create a beat under a scene. sort_order auto-assigned. |
+| `update_plot_beat` | Yes | Update fields on a plot beat. Pass only the fields to change. |
+| `delete_plot_beat` | Yes | Delete a plot beat by UUID. |
+| `reorder_plot_beats` | Yes | Reorder beats within a scene via {id, sort_order} list. |
 | `get_beat_suggestions` | Yes | Get story evidence suggestions for a beat (analysis, text stats, semantic). |
 | `auto_map_plot` | Yes | Batch-map story content to all empty beats using analysis + AI. |
 
@@ -617,6 +622,32 @@ update_plot_scene({
   plot_id: "plot-uuid-here",
   scene_id: "scene-uuid-here",
   summary: "Elena arrives at the lighthouse"
+})
+```
+
+### Create a Beat Under a Scene
+
+```javascript
+create_plot_beat({
+  plot_id: "plot-uuid-here",
+  scene_id: "scene-uuid-here",
+  title: "Elena spots the keeper's lantern",
+  description: "First glimpse of another soul on the island.",
+  beat_type: "reveal"
+})
+```
+
+### Reorder Beats Within a Scene
+
+```javascript
+reorder_plot_beats({
+  plot_id: "plot-uuid-here",
+  scene_id: "scene-uuid-here",
+  items: [
+    { id: "beat-uuid-a", sort_order: 1 },
+    { id: "beat-uuid-b", sort_order: 2 },
+    { id: "beat-uuid-c", sort_order: 3 }
+  ]
 })
 ```
 
