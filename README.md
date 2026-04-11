@@ -203,6 +203,8 @@ Tools for the dedicated Plot Designer screen at `/books/{bookId}/plot`.
 | `get_plot_template` | Yes | Get a single plot template with full beat details (acts → beats → name + hint). |
 | `get_book_plot` | Yes | Get the plot linked to a book with all acts, scenes, and beats. |
 | `create_book_plot_from_template` | Yes | Create a plot from a template and link to a book. |
+| `get_plot_synopsis` | Yes | Read the cached AI synopsis for a book's plot. Does not trigger regeneration. Returns `{synopsis, hash, generated_at}` or null fields if none has been generated. |
+| `regenerate_plot_synopsis` | Yes | Force regeneration of the AI synopsis. Cache-aware: returns the cached value if the plot content hasn't drifted. Requires BYOK. |
 | `delete_book_plot` | Yes | Delete the plot linked to a book. |
 | `create_plot_beat` | Yes | Create a beat under a scene. sort_order auto-assigned. |
 | `update_plot_beat` | Yes | Update fields on a plot beat. Pass only the fields to change. |

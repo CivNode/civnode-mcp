@@ -3852,6 +3852,40 @@ const tools = [
     handler: (args) => postAPI(`/api/books/${args.book_id}/plot/from-template`, { template_id: args.template_id }),
   },
   {
+    name: "get_plot_synopsis",
+    description: "Read the cached AI-generated synopsis for a book's plot. Returns the synopsis text along with the hash and generated-at timestamp. This does NOT trigger regeneration — it only reads the existing cached value from the plot record. Returns null synopsis if none has been generated yet. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+      },
+      required: ["book_id"],
+    },
+    handler: async (args) => {
+      const result = await fetchAPI(`/api/books/${args.book_id}/plot`);
+      if (!result || !result.plot) {
+        return { synopsis: null, hash: null, generated_at: null };
+      }
+      return {
+        synopsis: result.plot.synopsis || null,
+        hash: result.plot.synopsis_hash || null,
+        generated_at: result.plot.synopsis_generated_at || null,
+      };
+    },
+  },
+  {
+    name: "regenerate_plot_synopsis",
+    description: "Force regeneration of the AI synopsis for a book's plot. Calls the user's BYOK LLM to produce a fresh 2-3 sentence summary derived from the plot's acts, scenes, and beats. If the plot's content hash hasn't drifted since the last generation, the cached value is returned without an LLM call. Requires authentication and a configured AI provider (BYOK).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "Book UUID" },
+      },
+      required: ["book_id"],
+    },
+    handler: (args) => postAPI(`/api/books/${args.book_id}/plot/synopsis`, {}),
+  },
+  {
     name: "update_plot_scene",
     description:
       "Update fields on a plot scene. Pass only the fields you want to change. To move the scene to a different act in the same plot, pass act_id (and optionally sort_order). Requires authentication.",
