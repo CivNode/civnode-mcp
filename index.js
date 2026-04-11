@@ -4247,6 +4247,19 @@ const tools = [
     handler: () => fetchAPI("/api/books?has_plot=1"),
   },
   {
+    name: "search_my_stories",
+    description:
+      "Full-text search across the user's Stories (books with linked plots). Matches against book title, subtitle, blurb, plot title, central conflict, setting summary, and plot synopsis. Returns results in relevance order. Useful for 'find my story about a lighthouse' or 'the one with the zeppelin'. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Search query" },
+      },
+      required: ["query"],
+    },
+    handler: (args) => fetchAPI("/api/books?has_plot=1&q=" + encodeURIComponent(args.query)),
+  },
+  {
     name: "get_book",
     description: "Get a book's details including metadata and linked entities. Requires authentication.",
     inputSchema: {
