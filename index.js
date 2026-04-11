@@ -4249,7 +4249,7 @@ const tools = [
   {
     name: "search_my_stories",
     description:
-      "Full-text search across the user's Stories (books with linked plots). Matches against book title, subtitle, blurb, plot title, central conflict, setting summary, and plot synopsis. Returns results in relevance order. Useful for 'find my story about a lighthouse' or 'the one with the zeppelin'. Requires authentication.",
+      "Full-text search across the user's Stories (books with linked plots). Matches against book title, subtitle, blurb, plot title, central conflict, setting summary, plot synopsis, and any character linked to the plot (by name or bio). Returns results in relevance order. Useful for 'find my story about Elena' or 'the one with the zeppelin'. Requires authentication.",
     inputSchema: {
       type: "object",
       properties: {
