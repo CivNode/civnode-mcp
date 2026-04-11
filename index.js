@@ -4237,6 +4237,16 @@ const tools = [
     handler: () => fetchAPI("/api/books"),
   },
   {
+    name: "list_my_stories",
+    description:
+      "List the user's books that have a linked plot (i.e. the user's Stories). Returns the same shape as list_books but filtered to only books that have been started as a story by applying a structure template. Useful for 'what stories am I working on?' or 'what's the latest thing I've been writing?'. Requires authentication.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+    handler: () => fetchAPI("/api/books?has_plot=1"),
+  },
+  {
     name: "get_book",
     description: "Get a book's details including metadata and linked entities. Requires authentication.",
     inputSchema: {

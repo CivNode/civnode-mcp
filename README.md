@@ -236,6 +236,7 @@ Full book management — create books with chapters, link compendium entities, e
 | Tool | Auth | Description |
 |------|------|-------------|
 | `list_books` | Yes | List your books. |
+| `list_my_stories` | Yes | List the user's books that have a plot. Subset of `list_books`. Useful for "what stories am I working on?" |
 | `get_book` | Yes | Get book details and linked entities. |
 | `create_book` | Yes | Create a book (title and book_type required). Types: novel, poetry_collection, essay_collection, screenplay. For screenplays, also pass screenplay_format. |
 | `update_book` | Yes | Update book metadata (title, subtitle, blurb, genre, etc.). Set `published: true/false` to publish or unpublish a book to the marketplace. Screenplays support screenplay_format, screenplay_font, screenplay_title_page. |
