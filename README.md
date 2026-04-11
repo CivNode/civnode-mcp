@@ -468,6 +468,38 @@ Real-time co-writing and draft sharing.
 | `ai_usage_log_local` | Yes | Log local AI usage (Ollama, ComfyUI) from the browser. |
 | `link_preview` | No | Get a rich preview for an internal CivNode URL. Returns title, author, image, and meta for published content. |
 
+### Speech Writing
+
+Deterministic speech metrics and chapter revision history for writers working
+on speeches. Every metric is computed from LanguageTool plus rule-based Go
+packages — no LLM calls anywhere in these tools.
+
+| Tool | Auth | Description |
+|------|------|-------------|
+| `speech_analysis` | Yes | Return speech metrics for a chapter: delivery time, word/syllable/sentence counts, LIX, Flesch-Kincaid, breath-test violations, filler words, passive voice, rhetorical devices, per-sentence timings. Results cached per content hash. |
+| `convert_to_speech` | Yes | Flip a book's type to `speech`, enable speech_mode on every chapter, and trigger a first analysis pass. Reversible. |
+| `convert_from_speech` | Yes | Revert a speech book back to `story` (or another target type) and clear speech_mode on every chapter. |
+| `list_revisions` | Yes | List revision history for a chapter, newest first. |
+| `fetch_revision` | Yes | Fetch a single revision's full body (ProseMirror JSON + plain text). |
+| `restore_revision` | Yes | Restore a chapter to a previous revision. Snapshots current body first so nothing is lost. |
+| `list_speaker_notes` | Yes | List anchored speaker notes on a chapter, sorted by anchor position. |
+| `create_speaker_note` | Yes | Create a speaker note anchored to a chapter text range. |
+
+Example — run a full speech analysis on a chapter and print the delivery time:
+
+```
+mcp__civnode__speech_analysis({
+  chapter_id: "8f3a...",
+  audience_preset: "formal"
+})
+```
+
+Example — convert an existing story book into a speech:
+
+```
+mcp__civnode__convert_to_speech({ book_id: "a1b2..." })
+```
+
 ---
 
 ## Admin Tools

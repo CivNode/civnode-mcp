@@ -5495,6 +5495,192 @@ const tools = [
     handler: (args) =>
       fetchAPI(`/api/link-preview?url=${encodeURIComponent(args.url)}`),
   },
+
+  // ── Speech Writing ──
+  {
+    name: "speech_analysis",
+    description:
+      "Return deterministic speech metrics for a chapter: delivery time, word and syllable counts, LIX and Flesch-Kincaid readability, breath-test warnings, filler-word and passive-voice counts, detected rhetorical devices, and per-sentence timing. All numbers come from LanguageTool plus rule-based Go packages — no LLM calls. Results are cached per content hash so repeat requests for an unchanged chapter return instantly.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        chapter_id: {
+          type: "string",
+          description: "The chapter UUID to analyze.",
+        },
+        audience_preset: {
+          type: "string",
+          enum: ["conversational", "formal", "ceremonial"],
+          description: "Delivery cadence preset. Defaults to 'formal'.",
+        },
+        language: {
+          type: "string",
+          description:
+            "Language hint (en, en-US, en-GB, de, es, fr). Empty = let LanguageTool auto-detect.",
+        },
+        force_refresh: {
+          type: "boolean",
+          description:
+            "Bypass the content-hash cache and recompute from scratch.",
+        },
+      },
+      required: ["chapter_id"],
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.audience_preset) params.set("audience_preset", args.audience_preset);
+      if (args.language) params.set("language", args.language);
+      if (args.force_refresh) params.set("force_refresh", "1");
+      const qs = params.toString();
+      const suffix = qs ? `?${qs}` : "";
+      return fetchAPI(`/api/chapters/${args.chapter_id}/speech-analysis${suffix}`);
+    },
+  },
+  {
+    name: "convert_to_speech",
+    description:
+      "Flip a book's book_type to 'speech', enable speech_mode on every chapter, and trigger a first speech-analysis pass. Reversible via convert_from_speech. Chapter contents are not modified; only metadata flips.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "The book UUID to convert." },
+      },
+      required: ["book_id"],
+    },
+    handler: (args) =>
+      postAPI(`/api/books/${args.book_id}/convert-to-speech`, {}),
+  },
+  {
+    name: "convert_from_speech",
+    description:
+      "Reverse of convert_to_speech. Flips book_type back to the target (default 'story') and clears speech_mode on every chapter. Cached speech metrics on chapter_analysis are preserved as harmless historical data.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        book_id: { type: "string", description: "The speech book UUID to revert." },
+        target_type: {
+          type: "string",
+          enum: ["story", "novel", "screenplay", "essay_collection", "poetry_collection"],
+          description: "Destination book_type. Defaults to 'story'.",
+        },
+      },
+      required: ["book_id"],
+    },
+    handler: (args) =>
+      postAPI(`/api/books/${args.book_id}/convert-from-speech`, {
+        target_type: args.target_type || "story",
+      }),
+  },
+  {
+    name: "list_revisions",
+    description:
+      "List revision history for a chapter, newest first. Each entry includes revision id, author, word count and created_at timestamp. Use fetch_revision to load a specific body and restore_revision to roll a chapter back.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        chapter_id: { type: "string", description: "The chapter UUID." },
+        limit: {
+          type: "number",
+          description: "Maximum rows to return (1-200, default 50).",
+        },
+        offset: {
+          type: "number",
+          description: "Pagination offset.",
+        },
+      },
+      required: ["chapter_id"],
+    },
+    handler: (args) => {
+      const params = new URLSearchParams();
+      if (args.limit) params.set("limit", String(args.limit));
+      if (args.offset) params.set("offset", String(args.offset));
+      const qs = params.toString();
+      const suffix = qs ? `?${qs}` : "";
+      return fetchAPI(`/api/chapters/${args.chapter_id}/revisions${suffix}`);
+    },
+  },
+  {
+    name: "fetch_revision",
+    description:
+      "Fetch a single revision's full body (ProseMirror JSON plus plain text) by id.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        chapter_id: { type: "string", description: "The chapter UUID." },
+        revision_id: { type: "string", description: "The revision UUID." },
+      },
+      required: ["chapter_id", "revision_id"],
+    },
+    handler: (args) =>
+      fetchAPI(`/api/chapters/${args.chapter_id}/revisions/${args.revision_id}`),
+  },
+  {
+    name: "restore_revision",
+    description:
+      "Restore a chapter to a previous revision. Snapshots the current body as a new revision first so nothing is lost, then writes the selected revision's body onto the chapter.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        chapter_id: { type: "string", description: "The chapter UUID." },
+        revision_id: {
+          type: "string",
+          description: "The revision UUID to restore.",
+        },
+      },
+      required: ["chapter_id", "revision_id"],
+    },
+    handler: (args) =>
+      postAPI(
+        `/api/chapters/${args.chapter_id}/revisions/${args.revision_id}/restore`,
+        {},
+      ),
+  },
+  {
+    name: "list_speaker_notes",
+    description:
+      "List every speaker note anchored to a chapter, sorted by anchor_start ASC. Speaker notes are anchored margin comments used by speech writers to flag beats, pacing, and stage cues on a specific text range.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        chapter_id: { type: "string", description: "The chapter UUID." },
+      },
+      required: ["chapter_id"],
+    },
+    handler: (args) => fetchAPI(`/api/chapters/${args.chapter_id}/notes`),
+  },
+  {
+    name: "create_speaker_note",
+    description:
+      "Create a speaker note on a chapter. The anchor range identifies the exact text span the note is attached to; anchor_text is a short copy of the selection for display.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        chapter_id: { type: "string", description: "The chapter UUID." },
+        anchor_start: {
+          type: "number",
+          description: "Character offset where the selection begins.",
+        },
+        anchor_end: {
+          type: "number",
+          description: "Character offset where the selection ends.",
+        },
+        anchor_text: {
+          type: "string",
+          description: "Short copy of the anchored text (max 200 chars).",
+        },
+        body: { type: "string", description: "Note body." },
+        parent_id: {
+          type: "string",
+          description: "Optional parent note id for threaded replies.",
+        },
+      },
+      required: ["chapter_id", "body"],
+    },
+    handler: (args) => {
+      const { chapter_id, ...rest } = args;
+      return postAPI(`/api/chapters/${chapter_id}/notes`, rest);
+    },
+  },
 ];
 
 // ─── Admin / Debug Tools (require CIVNODE_SESSION_TOKEN with admin role) ───
