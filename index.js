@@ -8,7 +8,7 @@
  * in real time, and publish to a community built on different principles —
  * no algorithm, no likes, no followers.
  *
- * 273 tools covering:
+ * 276 tools covering:
  * - Creative writing: works CRUD, series, AI feedback, title/summary suggestions
  * - World-building: characters, locations, creatures, plots, family trees (full CRUD + AI)
  * - Books: chapters, entity linking, cover generation, export
@@ -6288,6 +6288,52 @@ if (sessionToken) {
         required: ["id"],
       },
       handler: (args) => postAPI(`/api/civic-room/posts/${args.id}/publish`),
+    },
+
+    // ── File Manager ──────────────────────────────────────────────────────────
+    // NOTE: These three tools are a deliberate exception to the "MCP frozen"
+    // rule in MEMORY.md. The file manager launched in Phases 1–7 and the
+    // design doc Phase 8 explicitly requires list_drawers, file_stats, and
+    // admin_takedown. No other new tools are added.
+    {
+      name: "list_drawers",
+      description: "List all file drawers owned by the authenticated user. Returns drawer name, kind (user|book|work|collection|character|canvas), file count, and total size in bytes.",
+      inputSchema: {
+        type: "object",
+        properties: {},
+      },
+      handler: () => fetchAPI("/api/drawers"),
+    },
+    {
+      name: "file_stats",
+      description: "Get storage quota summary for the authenticated user: quota_bytes, used_bytes, plan (free|paid|grace), grace_until, and upgrade_url. Also returns a human-readable 'X MB of Y MB used' summary.",
+      inputSchema: {
+        type: "object",
+        properties: {},
+      },
+      handler: async () => {
+        const data = await fetchAPI("/api/me/storage");
+        const usedMB = ((data.used_bytes || 0) / (1024 * 1024)).toFixed(1);
+        const quotaMB = ((data.quota_bytes || 0) / (1024 * 1024)).toFixed(1);
+        return { ...data, summary: `${usedMB} MB of ${quotaMB} MB used` };
+      },
+    },
+    {
+      name: "admin_takedown",
+      description: "Execute a file takedown from a content report. Deletes the file from storage and the database, marks the report as actioned, and optionally bans the file hash to prevent re-upload. Requires admin role.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          report_id: { type: "string", description: "Content report UUID (required)" },
+          reason: { type: "string", description: "Reason for takedown (required)" },
+          ban_hash: { type: "boolean", description: "If true, adds the file SHA-256 to the banned-hash blocklist. Default: false." },
+        },
+        required: ["report_id", "reason"],
+      },
+      handler: (args) => postAPI(`/api/admin/content-reports/${args.report_id}/takedown`, {
+        reason: args.reason,
+        ban_hash: args.ban_hash || false,
+      }),
     },
   );
 }

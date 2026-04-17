@@ -2,7 +2,7 @@
 
 MCP server for [CivNode](https://civnode.com) — the AI-powered creative writing platform where every human gets exactly one page (a Monument) displayed at random. No algorithm, no likes, no followers.
 
-**260 tools** for writing, world-building (characters, locations, creatures, plots, family trees), entity exploration, books, collections, showcase, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, and platform administration.
+**263 tools** for writing, world-building (characters, locations, creatures, plots, family trees), entity exploration, books, collections, showcase, research, marketplace, library, forums, competitions, collaboration, passage comments, civic room, file management, and platform administration.
 
 ## Quick Start
 
@@ -545,6 +545,16 @@ Admin tools require a session token with admin role. They only appear when a tok
 | `admin_ornaments` | List monument ornaments. |
 | `admin_captcha_stats` | Captcha analytics: challenges, solve rates, country breakdown. |
 | `admin_captcha_recent_failures` | Recent captcha failures with IP and country. |
+| `admin_takedown` | Execute a takedown from a content report (delete file, log event, optionally ban hash). |
+
+### File Manager
+
+Tools for inspecting file storage. Require a session token.
+
+| Tool | Auth | Description |
+|------|------|-------------|
+| `list_drawers` | Yes | List all drawers owned by the authenticated user. Returns name, kind (user/book/work/collection/character/canvas), file count, and total size in bytes. |
+| `file_stats` | Yes | Get storage quota summary: quota_bytes, used_bytes, plan (free/paid/grace), grace_until, upgrade_url, and a human-readable "X MB of Y MB used" string. |
 
 ### Civic Room (Admin / Strategist)
 
