@@ -556,6 +556,24 @@ Tools for inspecting file storage. Require a session token.
 | `list_drawers` | Yes | List all drawers owned by the authenticated user. Returns name, kind (user/book/work/collection/character/canvas), file count, and total size in bytes. |
 | `file_stats` | Yes | Get storage quota summary: quota_bytes, used_bytes, plan (free/paid/grace), grace_until, upgrade_url, and a human-readable "X MB of Y MB used" string. |
 
+### Volumes (cross-puzzle-type library + unlock)
+
+One library + one unlock surface across sudoku, wordsearch, and (future) crossword. Backed by the `volumes_unified` SQL view; per-format play surfaces (`/api/sudoku/...`, `/api/wordsearch/...`) stay where they are. Require a session token.
+
+| Tool | Auth | Description |
+|------|------|-------------|
+| `volume_library` | Yes | List every volume the authenticated user owns across all puzzle types. Each row is tagged with `puzzle_type` (sudoku / wordsearch / crossword) and `rail` (coffee / classics / code). Optional filters: `puzzle_type`, `rail`. |
+| `volume_unlock` | Yes | Redeem a volume unlock code. Works for sudoku KDP back-matter codes (four words separated by spaces, dots, or middle-dots) and wordsearch unlock codes (single tokens like `ALICE-VOL-2026`). Idempotent — re-redeeming returns `already_owned: true`. |
+
+Examples:
+
+```json
+{ "tool": "volume_library" }
+{ "tool": "volume_library", "arguments": { "rail": "classics" } }
+{ "tool": "volume_unlock",  "arguments": { "code": "alpha · bravo · charlie · delta" } }
+{ "tool": "volume_unlock",  "arguments": { "code": "ALICE-VOL-2026" } }
+```
+
 ### Civic Room (Admin / Strategist)
 
 The Civic Room is a private workspace for platform strategists and admins to manage social media presence and coordinate.

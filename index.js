@@ -6319,6 +6319,36 @@ if (sessionToken) {
       },
     },
     {
+      name: "volume_library",
+      description: "List every volume the authenticated user owns across all puzzle types (sudoku, wordsearch, crossword). Returns rows tagged with puzzle_type and rail. Optionally filter by puzzle_type or rail.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          puzzle_type: { type: "string", description: "Filter by puzzle type: sudoku | wordsearch | crossword. Optional." },
+          rail: { type: "string", description: "Filter by rail: coffee | classics | code. Optional." },
+        },
+      },
+      handler: (args) => {
+        const params = new URLSearchParams();
+        if (args.puzzle_type) params.set("puzzle_type", args.puzzle_type);
+        if (args.rail) params.set("rail", args.rail);
+        const qs = params.toString();
+        return fetchAPI(`/api/volumes/library${qs ? `?${qs}` : ""}`);
+      },
+    },
+    {
+      name: "volume_unlock",
+      description: "Redeem a volume unlock code. Works for both sudoku KDP back-matter codes (four words separated by spaces, dots, or middle-dots) and wordsearch unlock codes (single tokens like ALICE-VOL-2026). The dispatcher figures out which puzzle type the code belongs to and inserts the matching purchase row idempotently.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          code: { type: "string", description: "The unlock code as printed in the back matter of the book (required)." },
+        },
+        required: ["code"],
+      },
+      handler: (args) => postAPI("/api/volumes/unlock", { code: args.code }),
+    },
+    {
       name: "admin_takedown",
       description: "Execute a file takedown from a content report. Deletes the file from storage and the database, marks the report as actioned, and optionally bans the file hash to prevent re-upload. Requires admin role.",
       inputSchema: {
